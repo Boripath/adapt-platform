@@ -168,28 +168,28 @@ export default function CurrentYearAnalytics({ testResults, questions, openIndic
         <table className="table">
           <thead>
             <tr>
-              <th style={{width: '60px', textAlign: 'center'}}>อันดับ</th>
-              <th>ชื่อ-นามสกุล</th>
-              <th>ชั้น</th>
-              {showSchool && <th>โรงเรียน</th>}
-              <th style={{textAlign: 'center'}}>คะแนนที่ได้</th>
-              <th style={{textAlign: 'center'}}>ร้อยละ</th>
+              <th style={{width: '10%', textAlign: 'center', padding: '1rem'}}>อันดับ</th>
+              <th style={{width: showSchool ? '25%' : '40%', padding: '1rem'}}>ชื่อ-นามสกุล</th>
+              <th style={{width: '15%', padding: '1rem'}}>ชั้น</th>
+              {showSchool && <th style={{width: '25%', padding: '1rem'}}>โรงเรียน</th>}
+              <th style={{width: '15%', textAlign: 'center', padding: '1rem'}}>คะแนนที่ได้</th>
+              <th style={{width: '10%', textAlign: 'center', padding: '1rem'}}>ร้อยละ</th>
             </tr>
           </thead>
           <tbody>
             {records.map((r, index) => (
               <tr key={r.id || index}>
-                <td style={{textAlign: 'center', fontWeight: 'bold'}}>
+                <td style={{textAlign: 'center', fontWeight: 'bold', padding: '1rem'}}>
                   {index === 0 ? <span style={{color: '#fbbf24', fontSize: '1.2rem'}}>1</span> : 
                    index === 1 ? <span style={{color: '#9ca3af', fontSize: '1.1rem'}}>2</span> : 
                    index === 2 ? <span style={{color: '#b45309', fontSize: '1.1rem'}}>3</span> : 
                    index + 1}
                 </td>
-                <td>{r.studentName}</td>
-                <td>{r.studentClass}</td>
-                {showSchool && <td>{r.schoolName}</td>}
-                <td style={{textAlign: 'center', fontWeight: 'bold', color: 'var(--primary)'}}>{r.score} / {r.total}</td>
-                <td style={{textAlign: 'center'}}>{r.percent.toFixed(2)}%</td>
+                <td style={{padding: '1rem'}}>{r.studentName}</td>
+                <td style={{padding: '1rem'}}>{r.studentClass}</td>
+                {showSchool && <td style={{padding: '1rem'}}>{r.schoolName}</td>}
+                <td style={{textAlign: 'center', fontWeight: 'bold', color: 'var(--primary)', padding: '1rem'}}>{r.score} / {r.total}</td>
+                <td style={{textAlign: 'center', padding: '1rem'}}>{r.percent.toFixed(2)}%</td>
               </tr>
             ))}
           </tbody>
@@ -291,7 +291,7 @@ export default function CurrentYearAnalytics({ testResults, questions, openIndic
           </div>
         ) : (
           examYearsList.map(year => {
-            const isExpanded = expandedRankingYears[year] !== false; // Default expanded
+            const isExpanded = expandedRankingYears[year] === true; // Default hidden
             return (
               <div key={year} className="glass-panel mb-4" style={{ padding: '0', overflow: 'hidden' }}>
                 <div 
