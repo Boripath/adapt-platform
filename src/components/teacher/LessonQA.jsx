@@ -167,7 +167,7 @@ export default function LessonQA({ user, openIndicatorInfo }) {
                                     </div>
                                     {editingMessageId === c.id ? (
                                       <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                                        <input type="text" className="input-field" style={{ flex: 1, padding: '0.5rem' }} value={editMessageText} onChange={(e) => setEditMessageText(e.target.value)} />
+                                        <input type="text" className="input-field" style={{ flex: 1, padding: '0.5rem' }} value={editMessageText} onChange={(e) => setEditMessageText(e.target.value)} maxLength={500} />
                                         <button className="btn btn-primary btn-sm" onClick={() => handleUpdateMessage(c.id)}>บันทึก</button>
                                         <button className="btn btn-outline btn-sm" onClick={() => setEditingMessageId(null)}>ยกเลิก</button>
                                       </div>
@@ -182,9 +182,10 @@ export default function LessonQA({ user, openIndicatorInfo }) {
                                 <input 
                                   type="text" 
                                   className="form-control" 
-                                  placeholder={`พิมพ์ตอบกลับ ${studentName}...`}
+                                  placeholder={`พิมพ์ตอบกลับ ${studentName}... (สูงสุด 500 ตัวอักษร)`}
                                   value={replyMessages[threadKey] || ''}
                                   onChange={(e) => handleReplyChange(threadKey, e.target.value)}
+                                  maxLength={500}
                                   style={{ flex: 1 }}
                                 />
                                 <button className="btn btn-primary" onClick={() => handleReply(indicatorCode, studentId, threadKey)} disabled={!replyMessages[threadKey]?.trim()}>

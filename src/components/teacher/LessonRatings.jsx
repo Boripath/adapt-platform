@@ -29,17 +29,27 @@ export default function LessonRatings({ user, students }) {
     const { data: sEvals } = await studentQuery;
     
     if (sEvals && sEvals.length > 0) {
-      const total = sEvals.length;
-      const sumFam = sEvals.reduce((acc, curr) => acc + curr.familiarity_rating, 0);
-      const sumPlat = sEvals.reduce((acc, curr) => acc + curr.platform_rating, 0);
+      const studentMap = {};
+      sEvals.forEach(evalRecord => {
+        const existing = studentMap[evalRecord.student_id];
+        const currentDataTime = new Date(evalRecord.created_at || 0);
+        if (!existing || currentDataTime > new Date(existing.created_at || 0)) {
+           studentMap[evalRecord.student_id] = evalRecord;
+        }
+      });
+      
+      const uniqueEvals = Object.values(studentMap);
+      const total = uniqueEvals.length;
+      
+      const sumFam = uniqueEvals.reduce((acc, curr) => acc + curr.familiarity_rating, 0);
+      const sumPlat = uniqueEvals.reduce((acc, curr) => acc + curr.platform_rating, 0);
       setStudentStats({
         avgFamiliarity: (sumFam / total).toFixed(2),
         avgPlatform: (sumPlat / total).toFixed(2),
         total
       });
       
-      const ids = new Set(sEvals.map(evalRecord => evalRecord.student_id));
-      setEvaluatedStudentIds(ids);
+      setEvaluatedStudentIds(new Set(Object.keys(studentMap).map(id => Number(id) || id)));
     } else {
       setStudentStats({ avgFamiliarity: 0, avgPlatform: 0, total: 0 });
       setEvaluatedStudentIds(new Set());
@@ -65,6 +75,15 @@ export default function LessonRatings({ user, students }) {
     setLoading(false);
   };
 
+  const getQualityLevel = (score) => {
+    const s = parseFloat(score);
+    if (s <= 1) return 'ระดับ น้อยมาก';
+    if (s <= 2) return 'ระดับ น้อย';
+    if (s <= 3) return 'ระดับ ปานกลาง';
+    if (s <= 4) return 'ระดับ มาก';
+    return 'ระดับ มากที่สุด';
+  };
+
   const StatCard = ({ title, value, subtitle, icon }) => (
     <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1, minWidth: '250px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -75,7 +94,12 @@ export default function LessonRatings({ user, students }) {
         <h2 style={{ margin: 0, color: 'var(--primary)', fontSize: '2.5rem' }}>{value}</h2>
         <span style={{ fontWeight: 'bold' }}>/ 5</span>
       </div>
-      <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-light)' }}>จากผู้ประเมินทั้งหมด {subtitle} คน</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
+        <span style={{ fontWeight: 'bold', color: 'var(--primary)', backgroundColor: 'rgba(79, 70, 229, 0.1)', padding: '4px 10px', borderRadius: '12px', fontSize: '0.9rem' }}>
+          {getQualityLevel(value)}
+        </span>
+        <span style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-light)' }}>จากผู้ประเมินทั้งหมด {subtitle} คน</span>
+      </div>
     </div>
   );
 
