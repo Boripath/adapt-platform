@@ -8,9 +8,14 @@ import SubjectSelection from '../components/student/SubjectSelection';
 import ExamYearBlock from '../components/student/ExamYearBlock';
 import PlatformEvaluationModal from '../components/common/PlatformEvaluationModal';
 
+import CurrentYearAnalytics from '../components/teacher/CurrentYearAnalytics';
+
 export default function StudentDashboard() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [showAnalytics, setShowAnalytics] = useState(false);
+  const [globalData, setGlobalData] = useState({ testResults: [], questions: [], students: [], teachersList: [] });
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
   const [testResultsByYear, setTestResultsByYear] = useState({});
   const [remedialContentsByYear, setRemedialContentsByYear] = useState({});
   const [allTestResults, setAllTestResults] = useState([]);
@@ -125,28 +130,78 @@ export default function StudentDashboard() {
     navigate('/');
   };
 
+  const handleOpenAnalytics = async () => {
+    if (showAnalytics) {
+      setShowAnalytics(false);
+      return;
+    }
+    
+    setShowAnalytics(true);
+    if (globalData.testResults.length === 0) {
+      setLoadingAnalytics(true);
+      const [
+        { data: tResults },
+        { data: qData },
+        { data: sData },
+        { data: teachers }
+      ] = await Promise.all([
+        supabase.from('test_results').select('*'),
+        supabase.from('questions').select('*').neq('exam_year', 'LESSON'),
+        supabase.from('students').select('*'),
+        supabase.from('teachers').select('*')
+      ]);
+      
+      setGlobalData({
+        testResults: tResults || [],
+        questions: qData || [],
+        students: sData || [],
+        teachersList: teachers || []
+      });
+      setLoadingAnalytics(false);
+    }
+  };
+
   if (!user) return null;
   if (loading) return <div className="min-h-screen flex-center"><p>กำลังโหลดข้อมูล...</p></div>;
 
   return (
     <div className="dashboard-container">
-      <StudentHeader user={user} handleLogout={handleLogout} academicYear={academicYear} openEvaluationModal={() => setIsEvaluationModalOpen(true)} />
+      <StudentHeader user={user} handleLogout={handleLogout} academicYear={academicYear} openEvaluationModal={() => setIsEvaluationModalOpen(true)} openAnalytics={handleOpenAnalytics} />
 
       <main className="dashboard-main">
-        <SubjectSelection />
+        {showAnalytics ? (
+          loadingAnalytics ? (
+            <div style={{padding: '3rem', textAlign: 'center'}}>กำลังโหลดข้อมูลอันดับ...</div>
+          ) : (
+            <div style={{marginTop: '1rem'}}>
+               <button className="btn btn-outline mb-4" onClick={() => setShowAnalytics(false)}>← กลับไปหน้าหลัก</button>
+               <CurrentYearAnalytics 
+                 testResults={globalData.testResults} 
+                 questions={globalData.questions} 
+                 user={user} 
+                 students={globalData.students} 
+                 teachersList={globalData.teachersList} 
+               />
+            </div>
+          )
+        ) : (
+          <>
+            <SubjectSelection />
 
-        {examYears.map((year) => (
-          <ExamYearBlock 
-            key={year}
-            year={year}
-            testResultsByYear={testResultsByYear}
-            remedialContentsByYear={remedialContentsByYear}
-            allTestResults={allTestResults}
-            expandedYears={expandedYears}
-            toggleYear={toggleYear}
-            navigate={navigate}
-          />
-        ))}
+            {examYears.map((year) => (
+              <ExamYearBlock 
+                key={year}
+                year={year}
+                testResultsByYear={testResultsByYear}
+                remedialContentsByYear={remedialContentsByYear}
+                allTestResults={allTestResults}
+                expandedYears={expandedYears}
+                toggleYear={toggleYear}
+                navigate={navigate}
+              />
+            ))}
+          </>
+        )}
       </main>
 
       <PlatformEvaluationModal 

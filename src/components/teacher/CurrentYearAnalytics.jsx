@@ -159,41 +159,89 @@ export default function CurrentYearAnalytics({ testResults, questions, openIndic
     return finalRankings;
   }, [testResults, students, teachersList]);
 
-  const renderRankingTable = (records, showSchool = false) => {
+  const PaginatedRankingTable = ({ records, showSchool = false, highlightStudentId = null, tableTitle = '' }) => {
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+    
     if (records.length === 0) {
       return <div style={{padding: '1rem', color: 'var(--text-light)', textAlign: 'center'}}>ไม่มีข้อมูลนักเรียนที่สอบในส่วนนี้</div>;
     }
+    
+    // Find student's rank if highlightStudentId is provided
+    let studentRankText = null;
+    if (highlightStudentId) {
+      const studentIndex = records.findIndex(r => r.student_id === highlightStudentId);
+      if (studentIndex !== -1) {
+        studentRankText = (
+          <div style={{ padding: '0.75rem 1rem', backgroundColor: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)', borderRadius: '8px', marginBottom: '1rem', color: '#8b5cf6', fontWeight: 'bold' }}>
+            คุณอยู่อันดับที่ {studentIndex + 1} จากนักเรียนทั้งหมด {records.length} คน
+          </div>
+        );
+      }
+    }
+
+    const totalPages = Math.ceil(records.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const currentRecords = records.slice(startIndex, startIndex + itemsPerPage);
+
     return (
-      <div className="table-responsive">
-        <table className="table">
-          <thead>
-            <tr>
-              <th style={{width: '10%', textAlign: 'center', padding: '1rem'}}>อันดับ</th>
-              <th style={{width: showSchool ? '25%' : '40%', padding: '1rem'}}>ชื่อ-นามสกุล</th>
-              <th style={{width: '15%', padding: '1rem'}}>ชั้น</th>
-              {showSchool && <th style={{width: '25%', padding: '1rem'}}>โรงเรียน</th>}
-              <th style={{width: '15%', textAlign: 'center', padding: '1rem'}}>คะแนนที่ได้</th>
-              <th style={{width: '10%', textAlign: 'center', padding: '1rem'}}>ร้อยละ</th>
-            </tr>
-          </thead>
-          <tbody>
-            {records.map((r, index) => (
-              <tr key={r.id || index}>
-                <td style={{textAlign: 'center', fontWeight: 'bold', padding: '1rem'}}>
-                  {index === 0 ? <span style={{color: '#fbbf24', fontSize: '1.2rem'}}>1</span> : 
-                   index === 1 ? <span style={{color: '#9ca3af', fontSize: '1.1rem'}}>2</span> : 
-                   index === 2 ? <span style={{color: '#b45309', fontSize: '1.1rem'}}>3</span> : 
-                   index + 1}
-                </td>
-                <td style={{padding: '1rem'}}>{r.studentName}</td>
-                <td style={{padding: '1rem'}}>{r.studentClass}</td>
-                {showSchool && <td style={{padding: '1rem'}}>{r.schoolName}</td>}
-                <td style={{textAlign: 'center', fontWeight: 'bold', color: 'var(--primary)', padding: '1rem'}}>{r.score} / {r.total}</td>
-                <td style={{textAlign: 'center', padding: '1rem'}}>{r.percent.toFixed(2)}%</td>
+      <div style={{ marginBottom: '2rem' }}>
+        {tableTitle && <h6 style={{ color: 'var(--text-dark)', marginBottom: '0.5rem', fontSize: '1.1rem' }}>{tableTitle}</h6>}
+        {studentRankText}
+        <div className="table-responsive">
+          <table className="table">
+            <thead>
+              <tr>
+                <th style={{width: '10%', textAlign: 'center', padding: '1rem'}}>อันดับ</th>
+                <th style={{width: showSchool ? '25%' : '40%', padding: '1rem'}}>ชื่อ-นามสกุล</th>
+                <th style={{width: '15%', padding: '1rem'}}>ชั้น</th>
+                {showSchool && <th style={{width: '25%', padding: '1rem'}}>โรงเรียน</th>}
+                <th style={{width: '15%', textAlign: 'center', padding: '1rem'}}>คะแนนที่ได้</th>
+                <th style={{width: '10%', textAlign: 'center', padding: '1rem'}}>ร้อยละ</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {currentRecords.map((r, i) => {
+                const actualRank = startIndex + i + 1;
+                const isHighlight = r.student_id === highlightStudentId;
+                return (
+                  <tr key={r.id || i} style={isHighlight ? { backgroundColor: 'rgba(139, 92, 246, 0.05)' } : {}}>
+                    <td style={{textAlign: 'center', fontWeight: 'bold', padding: '1rem'}}>
+                      {actualRank === 1 ? <span style={{color: '#fbbf24', fontSize: '1.2rem'}}>1</span> : 
+                       actualRank === 2 ? <span style={{color: '#9ca3af', fontSize: '1.1rem'}}>2</span> : 
+                       actualRank === 3 ? <span style={{color: '#b45309', fontSize: '1.1rem'}}>3</span> : 
+                       actualRank}
+                    </td>
+                    <td style={{padding: '1rem', fontWeight: isHighlight ? 'bold' : 'normal', color: isHighlight ? '#8b5cf6' : 'inherit'}}>{r.studentName} {isHighlight && '(คุณ)'}</td>
+                    <td style={{padding: '1rem'}}>{r.studentClass}</td>
+                    {showSchool && <td style={{padding: '1rem'}}>{r.schoolName}</td>}
+                    <td style={{textAlign: 'center', fontWeight: 'bold', color: 'var(--primary)', padding: '1rem'}}>{r.score} / {r.total}</td>
+                    <td style={{textAlign: 'center', padding: '1rem'}}>{r.percent.toFixed(2)}%</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        {totalPages > 1 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', padding: '0.5rem' }}>
+            <button 
+              className="btn btn-outline btn-sm" 
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              ← ก่อนหน้า
+            </button>
+            <span style={{ fontSize: '0.9rem', color: 'var(--text-light)' }}>หน้า {currentPage} จาก {totalPages}</span>
+            <button 
+              className="btn btn-outline btn-sm" 
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              ถัดไป →
+            </button>
+          </div>
+        )}
       </div>
     );
   };
@@ -323,13 +371,29 @@ export default function CurrentYearAnalytics({ testResults, questions, openIndic
                               <h6 style={{ marginBottom: '0.5rem', color: 'var(--text-dark)', cursor: 'pointer' }} onClick={() => toggleSchool(`pre-${year}-${school}`)}>
                                 โรงเรียน: {school} {expandedSchools[`pre-${year}-${school}`] !== false ? '▼' : '▶'}
                               </h6>
-                              {expandedSchools[`pre-${year}-${school}`] !== false && renderRankingTable(recordsBySchool[school], false)}
+                              {expandedSchools[`pre-${year}-${school}`] !== false && <PaginatedRankingTable records={recordsBySchool[school]} showSchool={false} />}
                             </div>
                           ));
                         })()
+                      ) : user?.role === 'admin' ? (
+                        // Admin (All mode)
+                        <PaginatedRankingTable records={rankingsData[year].pre} showSchool={true} />
                       ) : (
-                        // Teacher or Admin (All mode)
-                        renderRankingTable(rankingsData[year].pre, user?.role === 'admin')
+                        // Teacher or Student
+                        <>
+                          <PaginatedRankingTable 
+                            records={rankingsData[year].pre.filter(r => r.schoolName === (user?.role === 'student' ? user?.teacher_school_name : teachersList?.find(t => t.id === user?.id)?.school_name || 'ไม่ระบุโรงเรียน'))} 
+                            showSchool={false} 
+                            highlightStudentId={user?.role === 'student' ? user?.id : null}
+                            tableTitle={`อันดับภายในโรงเรียน ${user?.role === 'student' ? user?.teacher_school_name : teachersList?.find(t => t.id === user?.id)?.school_name || 'ไม่ระบุโรงเรียน'}`}
+                          />
+                          <PaginatedRankingTable 
+                            records={rankingsData[year].pre} 
+                            showSchool={true} 
+                            highlightStudentId={user?.role === 'student' ? user?.id : null}
+                            tableTitle="อันดับรวมทุกโรงเรียน"
+                          />
+                        </>
                       )}
                     </div>
 
@@ -352,13 +416,29 @@ export default function CurrentYearAnalytics({ testResults, questions, openIndic
                               <h6 style={{ marginBottom: '0.5rem', color: 'var(--text-dark)', cursor: 'pointer' }} onClick={() => toggleSchool(`post-${year}-${school}`)}>
                                 โรงเรียน: {school} {expandedSchools[`post-${year}-${school}`] !== false ? '▼' : '▶'}
                               </h6>
-                              {expandedSchools[`post-${year}-${school}`] !== false && renderRankingTable(recordsBySchool[school], false)}
+                              {expandedSchools[`post-${year}-${school}`] !== false && <PaginatedRankingTable records={recordsBySchool[school]} showSchool={false} />}
                             </div>
                           ));
                         })()
+                      ) : user?.role === 'admin' ? (
+                        // Admin (All mode)
+                        <PaginatedRankingTable records={rankingsData[year].post} showSchool={true} />
                       ) : (
-                        // Teacher or Admin (All mode)
-                        renderRankingTable(rankingsData[year].post, user?.role === 'admin')
+                        // Teacher or Student
+                        <>
+                          <PaginatedRankingTable 
+                            records={rankingsData[year].post.filter(r => r.schoolName === (user?.role === 'student' ? user?.teacher_school_name : teachersList?.find(t => t.id === user?.id)?.school_name || 'ไม่ระบุโรงเรียน'))} 
+                            showSchool={false} 
+                            highlightStudentId={user?.role === 'student' ? user?.id : null}
+                            tableTitle={`อันดับภายในโรงเรียน ${user?.role === 'student' ? user?.teacher_school_name : teachersList?.find(t => t.id === user?.id)?.school_name || 'ไม่ระบุโรงเรียน'}`}
+                          />
+                          <PaginatedRankingTable 
+                            records={rankingsData[year].post} 
+                            showSchool={true} 
+                            highlightStudentId={user?.role === 'student' ? user?.id : null}
+                            tableTitle="อันดับรวมทุกโรงเรียน"
+                          />
+                        </>
                       )}
                     </div>
                   </div>
