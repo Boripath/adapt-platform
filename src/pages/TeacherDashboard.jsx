@@ -183,9 +183,22 @@ export default function TeacherDashboard() {
 
   const handleSaveStudent = async (e) => {
     e.preventDefault();
+    
+    const nid = studentForm.national_id.trim();
+    if (nid.length !== 13 || !/^\d{13}$/.test(nid)) {
+      alert('กรุณากรอกรหัสประจำตัวประชาชนให้ครบ 13 หลัก และต้องเป็นตัวเลขเท่านั้น');
+      return;
+    }
+
+    const isDuplicate = students.some(s => s.national_id === nid && s.id !== studentForm.id);
+    if (isDuplicate) {
+      alert('ไม่สามารถบันทึกได้ เนื่องจากรหัสประจำตัวประชาชนนี้มีอยู่ในระบบแล้ว');
+      return;
+    }
+
     if (studentForm.id) {
       const { data, error } = await supabase.from('students').update({
-        national_id: studentForm.national_id, name: studentForm.name, class: studentForm.class
+        national_id: nid, name: studentForm.name, class: studentForm.class
       }).eq('id', studentForm.id).select();
       if (!error && data) {
         setStudents(students.map(s => s.id === studentForm.id ? data[0] : s));
@@ -193,7 +206,7 @@ export default function TeacherDashboard() {
       } else alert('เกิดข้อผิดพลาดในการแก้ไขข้อมูล: ' + (error?.message || 'Unknown'));
     } else {
       const { data, error } = await supabase.from('students').insert([{
-        national_id: studentForm.national_id, name: studentForm.name, class: studentForm.class, teacher_id: user.id
+        national_id: nid, name: studentForm.name, class: studentForm.class, teacher_id: user.id
       }]).select();
       if (!error && data) {
         setStudents([...students, data[0]]);
@@ -212,12 +225,33 @@ export default function TeacherDashboard() {
       return;
     }
     
-    const newStudentsData = validStudents.map(row => ({
-      national_id: row[0].trim(),
-      name: row[1].trim(),
-      class: row[2].trim(),
-      teacher_id: user.id
-    }));
+    const newStudentsData = [];
+    const seenIds = new Set();
+
+    for (let i = 0; i < validStudents.length; i++) {
+      const row = validStudents[i];
+      const nid = row[0].trim();
+      const name = row[1].trim();
+      const sClass = row[2].trim();
+
+      if (nid.length !== 13 || !/^\d{13}$/.test(nid)) {
+         alert(`แถวที่ ${i + 1} (${name || 'ไม่มีชื่อ'}): กรุณากรอกรหัสประจำตัวประชาชนให้ครบ 13 หลัก และต้องเป็นตัวเลขเท่านั้น`);
+         return;
+      }
+      
+      if (seenIds.has(nid) || students.some(s => s.national_id === nid)) {
+         alert(`แถวที่ ${i + 1} (${name || 'ไม่มีชื่อ'}): ไม่สามารถบันทึกได้ เนื่องจากรหัสประจำตัวประชาชน ${nid} ซ้ำซ้อน (อาจซ้ำกับข้อมูลที่มีอยู่แล้ว หรือซ้ำกันเองในตาราง)`);
+         return;
+      }
+      seenIds.add(nid);
+      
+      newStudentsData.push({
+        national_id: nid,
+        name: name,
+        class: sClass,
+        teacher_id: user.id
+      });
+    }
 
     const { data, error } = await supabase.from('students').insert(newStudentsData).select();
     
@@ -590,7 +624,7 @@ export default function TeacherDashboard() {
         {activeTab === 'questions' && <QuestionBank questions={questions} user={user} userPermissions={userPermissions} openAddQuestionModal={openAddQuestionModal} expandedYears={expandedYears} toggleYear={toggleYear} getQuestionPreview={getQuestionPreview} handleMoveItem={handleMoveItem} openEditQuestionModal={openEditQuestionModal} handleDeleteQuestion={handleDeleteQuestion} openIndicatorInfo={openIndicatorInfo} />}
         {activeTab === 'lessons' && <LessonManagement indicators={indicators} user={user} userPermissions={userPermissions} openExerciseModal={openExerciseModal} openAddIndicatorModal={openAddIndicatorModal} openEditIndicatorModal={openEditIndicatorModal} openIndicatorInfo={openIndicatorInfo} />}
         {activeTab === 'lesson-qa' && <LessonQA user={user} openIndicatorInfo={openIndicatorInfo} />}
-        {activeTab === 'lesson-ratings' && <LessonRatings user={user} openIndicatorInfo={openIndicatorInfo} />}
+        {activeTab === 'lesson-ratings' && <LessonRatings user={user} openIndicatorInfo={openIndicatorInfo} students={students} />}
         {activeTab === 'question-analytics' && <QuestionBankAnalytics user={user} openIndicatorInfo={openIndicatorInfo} />}
         {activeTab === 'historical-analytics' && <HistoricalAnalytics questions={questions} getQuestionPreview={getQuestionPreview} openIndicatorInfo={openIndicatorInfo} user={user} />}
         {activeTab === 'current-year-analytics' && <CurrentYearAnalytics testResults={testResults} questions={questions} openIndicatorInfo={openIndicatorInfo} user={user} students={students} teachersList={teachersList} />}

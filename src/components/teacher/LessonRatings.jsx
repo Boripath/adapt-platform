@@ -3,10 +3,12 @@ import { supabase } from '../../lib/supabase';
 import { Star, BarChart2, Users } from 'lucide-react';
 import PlatformEvaluationModal from '../common/PlatformEvaluationModal';
 
-export default function LessonRatings({ user }) {
+export default function LessonRatings({ user, students }) {
   const [isEvaluationModalOpen, setIsEvaluationModalOpen] = useState(false);
   const [studentStats, setStudentStats] = useState({ avgFamiliarity: 0, avgPlatform: 0, total: 0 });
   const [teacherStats, setTeacherStats] = useState({ avgAnalysis: 0, avgPlatform: 0, total: 0 });
+  const [evaluatedStudentIds, setEvaluatedStudentIds] = useState(new Set());
+  const [showStudentList, setShowStudentList] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const isAdmin = user && user.role === 'admin';
@@ -35,8 +37,12 @@ export default function LessonRatings({ user }) {
         avgPlatform: (sumPlat / total).toFixed(2),
         total
       });
+      
+      const ids = new Set(sEvals.map(evalRecord => evalRecord.student_id));
+      setEvaluatedStudentIds(ids);
     } else {
       setStudentStats({ avgFamiliarity: 0, avgPlatform: 0, total: 0 });
+      setEvaluatedStudentIds(new Set());
     }
 
     // Fetch teacher evaluations (Only for admin)
@@ -98,22 +104,97 @@ export default function LessonRatings({ user }) {
           ผลการประเมินของนักเรียน{isAdmin ? 'ทั้งหมด' : ''}
         </h3>
         {studentStats.total > 0 ? (
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-            <StatCard 
-              title="ด้านการสร้างความคุ้นเคยในการสอบ" 
-              value={studentStats.avgFamiliarity} 
-              subtitle={studentStats.total}
-              icon={<BarChart2 size={24} color="var(--primary)" />}
-            />
-            <StatCard 
-              title="ด้านความพึงพอใจในการใช้งาน" 
-              value={studentStats.avgPlatform} 
-              subtitle={studentStats.total}
-              icon={<Star size={24} color="#fbbf24" />}
-            />
-          </div>
+          <>
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+              <StatCard 
+                title="ด้านการสร้างความคุ้นเคยในการสอบ" 
+                value={studentStats.avgFamiliarity} 
+                subtitle={studentStats.total}
+                icon={<BarChart2 size={24} color="var(--primary)" />}
+              />
+              <StatCard 
+                title="ด้านความพึงพอใจในการใช้งาน" 
+                value={studentStats.avgPlatform} 
+                subtitle={studentStats.total}
+                icon={<Star size={24} color="#fbbf24" />}
+              />
+            </div>
+
+            <div style={{ marginTop: '1.5rem' }}>
+              <button 
+                className="btn btn-outline btn-sm" 
+                onClick={() => setShowStudentList(!showStudentList)}
+              >
+                {showStudentList ? 'ซ่อนสถานะการประเมิน' : 'ดูสถานะการประเมินของนักเรียน'}
+              </button>
+              
+              {showStudentList && students && (
+                <div className="glass-panel mt-3 p-4" style={{display: 'flex', gap: '2rem'}}>
+                  <div style={{flex: 1}}>
+                    <h5 style={{color: '#10b981', marginBottom: '1rem'}}>✅ ประเมินแล้ว ({(students || []).filter(s => evaluatedStudentIds.has(s.id)).length} คน)</h5>
+                    <ul style={{listStyle: 'none', padding: 0, maxHeight: '250px', overflowY: 'auto'}}>
+                      {(students || []).filter(s => evaluatedStudentIds.has(s.id)).map(s => (
+                        <li key={s.id} style={{padding: '0.5rem 0', borderBottom: '1px solid var(--border)'}}>
+                          {s.name} ({s.class})
+                        </li>
+                      ))}
+                      {(students || []).filter(s => evaluatedStudentIds.has(s.id)).length === 0 && (
+                        <li className="text-light">ไม่มีข้อมูล</li>
+                      )}
+                    </ul>
+                  </div>
+                  <div style={{flex: 1}}>
+                    <h5 style={{color: '#ef4444', marginBottom: '1rem'}}>❌ ยังไม่ประเมิน ({(students || []).filter(s => !evaluatedStudentIds.has(s.id)).length} คน)</h5>
+                    <ul style={{listStyle: 'none', padding: 0, maxHeight: '250px', overflowY: 'auto'}}>
+                      {(students || []).filter(s => !evaluatedStudentIds.has(s.id)).map(s => (
+                        <li key={s.id} style={{padding: '0.5rem 0', borderBottom: '1px solid var(--border)'}}>
+                          {s.name} ({s.class})
+                        </li>
+                      ))}
+                      {(students || []).filter(s => !evaluatedStudentIds.has(s.id)).length === 0 && (
+                        <li className="text-light">ไม่มีข้อมูล</li>
+                      )}
+                    </ul>
+                  </div>
+                </div>
+              )}
+            </div>
+          </>
         ) : (
-          <p style={{ color: 'var(--text-light)', padding: '2rem', textAlign: 'center', backgroundColor: 'rgba(0,0,0,0.02)', borderRadius: '8px' }}>ยังไม่มีข้อมูลการประเมินจากนักเรียน</p>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+            <p style={{ color: 'var(--text-light)', padding: '2rem', textAlign: 'center', backgroundColor: 'rgba(0,0,0,0.02)', borderRadius: '8px', width: '100%' }}>ยังไม่มีข้อมูลการประเมินจากนักเรียน</p>
+            
+            <button 
+              className="btn btn-outline btn-sm" 
+              onClick={() => setShowStudentList(!showStudentList)}
+            >
+              {showStudentList ? 'ซ่อนสถานะการประเมิน' : 'ดูสถานะการประเมินของนักเรียน'}
+            </button>
+            
+            {showStudentList && students && (
+              <div className="glass-panel mt-3 p-4" style={{display: 'flex', gap: '2rem', width: '100%', textAlign: 'left'}}>
+                <div style={{flex: 1}}>
+                  <h5 style={{color: '#10b981', marginBottom: '1rem'}}>✅ ประเมินแล้ว (0 คน)</h5>
+                  <ul style={{listStyle: 'none', padding: 0, maxHeight: '250px', overflowY: 'auto'}}>
+                    <li className="text-light">ไม่มีข้อมูล</li>
+                  </ul>
+                </div>
+                <div style={{flex: 1}}>
+                  <h5 style={{color: '#ef4444', marginBottom: '1rem'}}>❌ ยังไม่ประเมิน ({(students || []).length} คน)</h5>
+                  <ul style={{listStyle: 'none', padding: 0, maxHeight: '250px', overflowY: 'auto'}}>
+                    {(students || []).map(s => (
+                      <li key={s.id} style={{padding: '0.5rem 0', borderBottom: '1px solid var(--border)'}}>
+                        {s.name} ({s.class})
+                      </li>
+                    ))}
+                    {(students || []).length === 0 && (
+                      <li className="text-light">ไม่มีข้อมูล</li>
+                    )}
+                  </ul>
+                </div>
+              </div>
+            )}
+          </div>
         )}
       </div>
 
