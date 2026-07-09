@@ -6,6 +6,7 @@ export default function StudentManagement({
   user,
   teachersList,
   openAddStudentModal,
+  openBulkAddStudentModal,
   handleMoveItem,
   openStudentAnalysis,
   openEditStudentModal,
@@ -60,8 +61,12 @@ export default function StudentManagement({
       <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem'}}>
         <h3 className="section-title" style={{marginBottom: 0}}>ระบบจัดการข้อมูลผู้เรียน {isAdmin && '(โหมดผู้ดูแลระบบ)'}</h3>
         <div style={{display: 'flex', gap: '1rem'}}>
-          <button className="btn btn-outline" style={{display: 'none'}}>📥 อัปโหลดรายชื่อจากไฟล์ Excel</button>
-          {!isAdmin && <button className="btn btn-primary" onClick={openAddStudentModal}>➕ เพิ่มนักเรียนใหม่</button>}
+          {!isAdmin && (
+            <>
+              <button className="btn btn-outline" onClick={openBulkAddStudentModal}>➕ เพิ่มรายชื่อนักเรียน(หลายคน)</button>
+              <button className="btn btn-primary" onClick={openAddStudentModal}>➕ เพิ่มรายชื่อนักเรียน(ทีละคน)</button>
+            </>
+          )}
         </div>
       </div>
 

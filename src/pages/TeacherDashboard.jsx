@@ -20,6 +20,7 @@ import LessonModal from '../components/teacher/modals/LessonModal';
 import IndicatorInfoModal from '../components/teacher/modals/IndicatorInfoModal';
 import StudentAnalysisModal from '../components/teacher/modals/StudentAnalysisModal';
 import ExerciseModal from '../components/teacher/modals/ExerciseModal';
+import BulkStudentModal from '../components/teacher/modals/BulkStudentModal';
 
 export default function TeacherDashboard() {
   const navigate = useNavigate();
@@ -44,6 +45,7 @@ export default function TeacherDashboard() {
 
   // Modals state
   const [isStudentModalOpen, setIsStudentModalOpen] = useState(false);
+  const [isBulkStudentModalOpen, setIsBulkStudentModalOpen] = useState(false);
   const [isQuestionModalOpen, setIsQuestionModalOpen] = useState(false);
   const [isIndicatorModalOpen, setIsIndicatorModalOpen] = useState(false);
   const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
@@ -197,6 +199,34 @@ export default function TeacherDashboard() {
         setStudents([...students, data[0]]);
         setIsStudentModalOpen(false);
       } else alert('เกิดข้อผิดพลาดในการเพิ่มนักเรียน: ' + (error?.message || 'Unknown'));
+    }
+  };
+
+  const openBulkAddStudentModal = () => {
+    setIsBulkStudentModalOpen(true);
+  };
+
+  const handleSaveBulkStudents = async (validStudents) => {
+    if (validStudents.length === 0) {
+      alert('ไม่มีข้อมูลที่ถูกต้องในการบันทึก');
+      return;
+    }
+    
+    const newStudentsData = validStudents.map(row => ({
+      national_id: row[0].trim(),
+      name: row[1].trim(),
+      class: row[2].trim(),
+      teacher_id: user.id
+    }));
+
+    const { data, error } = await supabase.from('students').insert(newStudentsData).select();
+    
+    if (!error && data) {
+      setStudents([...students, ...data]);
+      setIsBulkStudentModalOpen(false);
+      alert(`เพิ่มนักเรียนสำเร็จ ${data.length} คน`);
+    } else {
+      alert('เกิดข้อผิดพลาดในการเพิ่มนักเรียน: ' + (error?.message || 'Unknown'));
     }
   };
 
@@ -556,18 +586,19 @@ export default function TeacherDashboard() {
 
       <main className="dashboard-main">
         {activeTab === 'dashboard' && <TeacherOverview students={students} testResults={testResults} setActiveTab={setActiveTab} />}
-        {activeTab === 'students' && <StudentManagement students={students} user={user} teachersList={teachersList} openAddStudentModal={openAddStudentModal} handleMoveItem={handleMoveItem} openStudentAnalysis={openStudentAnalysis} openEditStudentModal={openEditStudentModal} handleDeleteStudent={handleDeleteStudent} />}
+        {activeTab === 'students' && <StudentManagement students={students} user={user} teachersList={teachersList} openAddStudentModal={openAddStudentModal} openBulkAddStudentModal={openBulkAddStudentModal} handleMoveItem={handleMoveItem} openStudentAnalysis={openStudentAnalysis} openEditStudentModal={openEditStudentModal} handleDeleteStudent={handleDeleteStudent} />}
         {activeTab === 'questions' && <QuestionBank questions={questions} user={user} userPermissions={userPermissions} openAddQuestionModal={openAddQuestionModal} expandedYears={expandedYears} toggleYear={toggleYear} getQuestionPreview={getQuestionPreview} handleMoveItem={handleMoveItem} openEditQuestionModal={openEditQuestionModal} handleDeleteQuestion={handleDeleteQuestion} openIndicatorInfo={openIndicatorInfo} />}
         {activeTab === 'lessons' && <LessonManagement indicators={indicators} user={user} userPermissions={userPermissions} openExerciseModal={openExerciseModal} openAddIndicatorModal={openAddIndicatorModal} openEditIndicatorModal={openEditIndicatorModal} openIndicatorInfo={openIndicatorInfo} />}
         {activeTab === 'lesson-qa' && <LessonQA user={user} openIndicatorInfo={openIndicatorInfo} />}
         {activeTab === 'lesson-ratings' && <LessonRatings user={user} openIndicatorInfo={openIndicatorInfo} />}
         {activeTab === 'question-analytics' && <QuestionBankAnalytics user={user} openIndicatorInfo={openIndicatorInfo} />}
         {activeTab === 'historical-analytics' && <HistoricalAnalytics questions={questions} getQuestionPreview={getQuestionPreview} openIndicatorInfo={openIndicatorInfo} user={user} />}
-        {activeTab === 'current-year-analytics' && <CurrentYearAnalytics testResults={testResults} questions={questions} openIndicatorInfo={openIndicatorInfo} />}
+        {activeTab === 'current-year-analytics' && <CurrentYearAnalytics testResults={testResults} questions={questions} openIndicatorInfo={openIndicatorInfo} user={user} students={students} teachersList={teachersList} />}
         {activeTab === 'admin' && user.role === 'admin' && <AdminManagement user={user} setAcademicYear={setAcademicYear} academicYear={academicYear} />}
       </main>
 
       <StudentModal isStudentModalOpen={isStudentModalOpen} setIsStudentModalOpen={setIsStudentModalOpen} studentForm={studentForm} setStudentForm={setStudentForm} handleSaveStudent={handleSaveStudent} />
+      <BulkStudentModal isOpen={isBulkStudentModalOpen} setIsOpen={setIsBulkStudentModalOpen} handleSaveBulkStudents={handleSaveBulkStudents} />
       <QuestionModal isQuestionModalOpen={isQuestionModalOpen} setIsQuestionModalOpen={setIsQuestionModalOpen} questionForm={questionForm} setQuestionForm={setQuestionForm} isEditingExerciseMode={isEditingExerciseMode} handleSaveQuestion={handleSaveQuestion} handleImageUpload={handleImageUpload} uploadingImage={uploadingImage} />
       <LessonModal isIndicatorModalOpen={isIndicatorModalOpen} setIsIndicatorModalOpen={setIsIndicatorModalOpen} indicatorForm={indicatorForm} setIndicatorForm={setIndicatorForm} handleSaveIndicator={handleSaveIndicator} />
       <IndicatorInfoModal isOpen={isIndicatorInfoOpen} setIsOpen={setIsIndicatorInfoOpen} indicator={selectedInfoIndicator} />

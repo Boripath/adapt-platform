@@ -1,8 +1,19 @@
 import { useState, useMemo } from 'react';
-import { Activity, TrendingDown, TrendingUp } from 'lucide-react';
+import { Activity, TrendingDown, TrendingUp, Trophy, Users, School } from 'lucide-react';
 
-export default function CurrentYearAnalytics({ testResults, questions, openIndicatorInfo }) {
+export default function CurrentYearAnalytics({ testResults, questions, openIndicatorInfo, user, students, teachersList }) {
   const [topCount, setTopCount] = useState(5);
+  const [rankingMode, setRankingMode] = useState('school'); // 'school' or 'all'
+  const [expandedRankingYears, setExpandedRankingYears] = useState({});
+  const [expandedSchools, setExpandedSchools] = useState({});
+
+  const toggleRankingYear = (year) => {
+    setExpandedRankingYears(prev => ({ ...prev, [year]: !prev[year] }));
+  };
+
+  const toggleSchool = (school) => {
+    setExpandedSchools(prev => ({ ...prev, [school]: !prev[school] }));
+  };
   
   // Calculate analytics from testResults
   const analyticsData = useMemo(() => {
@@ -33,7 +44,7 @@ export default function CurrentYearAnalytics({ testResults, questions, openIndic
     // Map all available indicators from questions
     const indicatorSet = new Set();
     questions.forEach(q => {
-      if (q.exam_year !== 'LESSON') { // Only O-NET questions
+      if (q.exam_year !== 'LESSON') {
         const codes = q.indicator_codes && q.indicator_codes.length > 0 ? q.indicator_codes : (q.indicator_code ? [q.indicator_code] : []);
         codes.forEach(c => indicatorSet.add(c));
       }
@@ -63,7 +74,7 @@ export default function CurrentYearAnalytics({ testResults, questions, openIndic
         code: ind,
         avg: percentCorrect.toFixed(2)
       };
-    }).sort((a,b) => Number(a.avg) - Number(b.avg)); // Sort asc (weakest first)
+    }).sort((a,b) => Number(a.avg) - Number(b.avg));
     
     return {
       weakest: statsList.slice(0, topCount),
@@ -71,6 +82,123 @@ export default function CurrentYearAnalytics({ testResults, questions, openIndic
       totalStudents
     };
   }, [testResults, questions, topCount]);
+
+  // Calculate rankings data
+  const rankingsData = useMemo(() => {
+    if (!testResults || !students) return {};
+    
+    const studentMap = {};
+    students.forEach(s => {
+      studentMap[s.id] = s;
+    });
+
+    const teacherMap = {};
+    if (teachersList) {
+      teachersList.forEach(t => {
+        teacherMap[t.id] = t;
+      });
+    }
+
+    const latestResultsMap = {}; 
+    
+    testResults.forEach(r => {
+      if (r.exam_year === 'LESSON') return;
+      if (r.subject !== 'Science' && r.subject !== 'Science (Post-test)') return;
+      
+      const examType = r.subject === 'Science' ? 'pre' : 'post';
+      const year = r.exam_year || 'ไม่ระบุปี';
+      
+      if (!studentMap[r.student_id]) return;
+
+      if (!latestResultsMap[year]) {
+        latestResultsMap[year] = { pre: {}, post: {} };
+      }
+      
+      const currentLatest = latestResultsMap[year][examType][r.student_id];
+      const thisTime = new Date(r.created_at || r.start_time || 0);
+      
+      if (!currentLatest || thisTime > new Date(currentLatest.created_at || currentLatest.start_time || 0)) {
+        latestResultsMap[year][examType][r.student_id] = r;
+      }
+    });
+
+    const finalRankings = {};
+    
+    Object.keys(latestResultsMap).forEach(year => {
+      finalRankings[year] = { pre: [], post: [] };
+      
+      ['pre', 'post'].forEach(type => {
+        const results = Object.values(latestResultsMap[year][type]);
+        
+        const mappedResults = results.map(r => {
+          const student = studentMap[r.student_id];
+          const studentName = student ? student.name : 'Unknown Student';
+          const studentClass = student ? student.class : '';
+          const teacherId = student ? student.teacher_id : r.teacher_id;
+          const teacher = teacherMap[teacherId];
+          const schoolName = teacher ? teacher.school_name : 'ไม่ระบุโรงเรียน';
+          
+          return {
+            ...r,
+            studentName,
+            studentClass,
+            schoolName,
+            percent: r.total > 0 ? (r.score / r.total) * 100 : 0
+          };
+        });
+        
+        mappedResults.sort((a, b) => {
+          if (b.score !== a.score) return b.score - a.score;
+          return a.studentName.localeCompare(b.studentName);
+        });
+        
+        finalRankings[year][type] = mappedResults;
+      });
+    });
+    
+    return finalRankings;
+  }, [testResults, students, teachersList]);
+
+  const renderRankingTable = (records, showSchool = false) => {
+    if (records.length === 0) {
+      return <div style={{padding: '1rem', color: 'var(--text-light)', textAlign: 'center'}}>ไม่มีข้อมูลนักเรียนที่สอบในส่วนนี้</div>;
+    }
+    return (
+      <div className="table-responsive">
+        <table className="table">
+          <thead>
+            <tr>
+              <th style={{width: '60px', textAlign: 'center'}}>อันดับ</th>
+              <th>ชื่อ-นามสกุล</th>
+              <th>ชั้น</th>
+              {showSchool && <th>โรงเรียน</th>}
+              <th style={{textAlign: 'center'}}>คะแนนที่ได้</th>
+              <th style={{textAlign: 'center'}}>ร้อยละ</th>
+            </tr>
+          </thead>
+          <tbody>
+            {records.map((r, index) => (
+              <tr key={r.id || index}>
+                <td style={{textAlign: 'center', fontWeight: 'bold'}}>
+                  {index === 0 ? <span style={{color: '#fbbf24', fontSize: '1.2rem'}}>1</span> : 
+                   index === 1 ? <span style={{color: '#9ca3af', fontSize: '1.1rem'}}>2</span> : 
+                   index === 2 ? <span style={{color: '#b45309', fontSize: '1.1rem'}}>3</span> : 
+                   index + 1}
+                </td>
+                <td>{r.studentName}</td>
+                <td>{r.studentClass}</td>
+                {showSchool && <td>{r.schoolName}</td>}
+                <td style={{textAlign: 'center', fontWeight: 'bold', color: 'var(--primary)'}}>{r.score} / {r.total}</td>
+                <td style={{textAlign: 'center'}}>{r.percent.toFixed(2)}%</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
+  const examYearsList = Object.keys(rankingsData).sort((a, b) => b.localeCompare(a));
 
   return (
     <section className="glass-panel p-4">
@@ -92,7 +220,7 @@ export default function CurrentYearAnalytics({ testResults, questions, openIndic
         <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem'}}>
           <h4 style={{ margin: 0 }}>ภาพรวมปีการศึกษาปัจจุบัน (Overall)</h4>
           <span className="badge" style={{background: 'var(--primary)', color: 'white', padding: '0.5rem 1rem', fontSize: '0.9rem'}}>
-            จำนวนนักเรียนที่เข้าสอบ: {analyticsData.totalStudents} คน
+            จำนวนนักเรียนที่เข้าสอบ (Pre-test): {analyticsData.totalStudents} คน
           </span>
         </div>
         
@@ -127,6 +255,117 @@ export default function CurrentYearAnalytics({ testResults, questions, openIndic
               </ul>
             </div>
           </div>
+        )}
+      </div>
+
+      <div style={{ marginTop: '3rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+          <div>
+            <h3 className="section-title" style={{margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+              <Trophy size={24} color="#fbbf24" />
+              อันดับคะแนนสอบของนักเรียน ในแต่ละปีการศึกษา
+            </h3>
+            <p className="text-light text-sm mt-1">แสดงผลคะแนนสอบแยกตามแบบทดสอบก่อนเรียน (Pre-test) และหลังเรียน (Post-test)</p>
+          </div>
+          {user?.role === 'admin' && (
+            <div style={{display: 'flex', gap: '0.5rem'}}>
+              <button 
+                className={`btn ${rankingMode === 'school' ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() => setRankingMode('school')}
+              >
+                <School size={16} style={{marginRight: '8px'}} /> แยกตามโรงเรียน
+              </button>
+              <button 
+                className={`btn ${rankingMode === 'all' ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() => setRankingMode('all')}
+              >
+                <Users size={16} style={{marginRight: '8px'}} /> รวมนักเรียนทั้งหมด
+              </button>
+            </div>
+          )}
+        </div>
+
+        {examYearsList.length === 0 ? (
+          <div className="glass-panel" style={{padding: '2rem', textAlign: 'center', color: 'var(--text-light)'}}>
+            ยังไม่มีข้อมูลคะแนนสอบของนักเรียน
+          </div>
+        ) : (
+          examYearsList.map(year => {
+            const isExpanded = expandedRankingYears[year] !== false; // Default expanded
+            return (
+              <div key={year} className="glass-panel mb-4" style={{ padding: '0', overflow: 'hidden' }}>
+                <div 
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem', background: 'rgba(255,255,255,0.02)', cursor: 'pointer', borderBottom: isExpanded ? '1px solid var(--border)' : 'none' }}
+                  onClick={() => toggleRankingYear(year)}
+                >
+                  <h4 style={{ margin: 0, color: 'var(--primary)' }}>ปีการศึกษา / ข้อสอบ: {year}</h4>
+                  <span>{isExpanded ? '▼ ซ่อน' : '▶ แสดง'}</span>
+                </div>
+                
+                {isExpanded && (
+                  <div style={{ padding: '1.5rem' }}>
+                    {/* PRE-TEST SECTION */}
+                    <div style={{ marginBottom: '2rem' }}>
+                      <h5 style={{ borderBottom: '2px solid var(--border)', paddingBottom: '0.5rem', marginBottom: '1rem', color: 'var(--text-dark)' }}>แบบทดสอบก่อนเรียน (Pre-test)</h5>
+                      {user?.role === 'admin' && rankingMode === 'school' ? (
+                        // Admin: Group by School
+                        (() => {
+                          const recordsBySchool = {};
+                          rankingsData[year].pre.forEach(r => {
+                            if (!recordsBySchool[r.schoolName]) recordsBySchool[r.schoolName] = [];
+                            recordsBySchool[r.schoolName].push(r);
+                          });
+                          const schools = Object.keys(recordsBySchool).sort();
+                          if (schools.length === 0) return <div style={{color: 'var(--text-light)', padding: '1rem 0'}}>ไม่มีข้อมูล</div>;
+                          
+                          return schools.map(school => (
+                            <div key={school} style={{ marginBottom: '1.5rem', borderLeft: '3px solid var(--primary)', paddingLeft: '1rem' }}>
+                              <h6 style={{ marginBottom: '0.5rem', color: 'var(--text-dark)', cursor: 'pointer' }} onClick={() => toggleSchool(`pre-${year}-${school}`)}>
+                                โรงเรียน: {school} {expandedSchools[`pre-${year}-${school}`] !== false ? '▼' : '▶'}
+                              </h6>
+                              {expandedSchools[`pre-${year}-${school}`] !== false && renderRankingTable(recordsBySchool[school], false)}
+                            </div>
+                          ));
+                        })()
+                      ) : (
+                        // Teacher or Admin (All mode)
+                        renderRankingTable(rankingsData[year].pre, user?.role === 'admin')
+                      )}
+                    </div>
+
+                    {/* POST-TEST SECTION */}
+                    <div>
+                      <h5 style={{ borderBottom: '2px solid var(--border)', paddingBottom: '0.5rem', marginBottom: '1rem', color: 'var(--text-dark)' }}>แบบทดสอบหลังเรียน (Post-test)</h5>
+                      {user?.role === 'admin' && rankingMode === 'school' ? (
+                        // Admin: Group by School
+                        (() => {
+                          const recordsBySchool = {};
+                          rankingsData[year].post.forEach(r => {
+                            if (!recordsBySchool[r.schoolName]) recordsBySchool[r.schoolName] = [];
+                            recordsBySchool[r.schoolName].push(r);
+                          });
+                          const schools = Object.keys(recordsBySchool).sort();
+                          if (schools.length === 0) return <div style={{color: 'var(--text-light)', padding: '1rem 0'}}>ไม่มีข้อมูล</div>;
+                          
+                          return schools.map(school => (
+                            <div key={school} style={{ marginBottom: '1.5rem', borderLeft: '3px solid var(--primary)', paddingLeft: '1rem' }}>
+                              <h6 style={{ marginBottom: '0.5rem', color: 'var(--text-dark)', cursor: 'pointer' }} onClick={() => toggleSchool(`post-${year}-${school}`)}>
+                                โรงเรียน: {school} {expandedSchools[`post-${year}-${school}`] !== false ? '▼' : '▶'}
+                              </h6>
+                              {expandedSchools[`post-${year}-${school}`] !== false && renderRankingTable(recordsBySchool[school], false)}
+                            </div>
+                          ));
+                        })()
+                      ) : (
+                        // Teacher or Admin (All mode)
+                        renderRankingTable(rankingsData[year].post, user?.role === 'admin')
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })
         )}
       </div>
     </section>
