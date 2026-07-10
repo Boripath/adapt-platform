@@ -184,9 +184,20 @@ export default function CurrentYearAnalytics({ testResults, questions, openIndic
     const startIndex = (currentPage - 1) * itemsPerPage;
     const currentRecords = records.slice(startIndex, startIndex + itemsPerPage);
 
+    const avgPercent = records.reduce((acc, r) => acc + r.percent, 0) / records.length;
+    const avgScore = records.reduce((acc, r) => acc + r.score, 0) / records.length;
+    const avgTotal = records.reduce((acc, r) => acc + r.total, 0) / records.length;
+
     return (
       <div style={{ marginBottom: '2rem' }}>
-        {tableTitle && <h6 style={{ color: 'var(--text-dark)', marginBottom: '0.5rem', fontSize: '1.1rem' }}>{tableTitle}</h6>}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '0.5rem' }}>
+          {tableTitle ? (
+            <h6 style={{ color: 'var(--text-dark)', margin: 0, fontSize: '1.1rem' }}>{tableTitle}</h6>
+          ) : <div></div>}
+          <div style={{ padding: '0.5rem 1rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '8px', color: '#059669', fontWeight: '500', fontSize: '0.95rem' }}>
+            คะแนนเฉลี่ย: {avgScore.toFixed(2)} / {avgTotal.toFixed(0)} ({avgPercent.toFixed(2)}%)
+          </div>
+        </div>
         {studentRankText}
         <div className="table-responsive">
           <table className="table">
@@ -377,7 +388,7 @@ export default function CurrentYearAnalytics({ testResults, questions, openIndic
                         })()
                       ) : user?.role === 'admin' ? (
                         // Admin (All mode)
-                        <PaginatedRankingTable records={rankingsData[year].pre} showSchool={true} />
+                        <PaginatedRankingTable records={rankingsData[year].pre} showSchool={true} tableTitle="อันดับรวมทุกโรงเรียน" />
                       ) : (
                         // Teacher or Student
                         <>
@@ -422,7 +433,7 @@ export default function CurrentYearAnalytics({ testResults, questions, openIndic
                         })()
                       ) : user?.role === 'admin' ? (
                         // Admin (All mode)
-                        <PaginatedRankingTable records={rankingsData[year].post} showSchool={true} />
+                        <PaginatedRankingTable records={rankingsData[year].post} showSchool={true} tableTitle="อันดับรวมทุกโรงเรียน" />
                       ) : (
                         // Teacher or Student
                         <>
