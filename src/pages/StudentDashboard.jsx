@@ -43,94 +43,104 @@ export default function StudentDashboard() {
     setUser(parsedUser);
 
     async function fetchData() {
-      // Load all test results from Supabase for this student
-      const [
-        { data: results },
-        { data: teacherData },
-        { data: settingsData },
-        { data: freshStudentData }
-      ] = await Promise.all([
-        supabase.from('test_results').select('*').eq('student_id', parsedUser.id).order('completed_at', { ascending: false }),
-        supabase.from('teachers').select('school_name').eq('id', parsedUser.teacher_id).maybeSingle(),
-        supabase.from('settings').select('value').eq('key', 'current_academic_year').maybeSingle(),
-        supabase.from('students').select('*').eq('id', parsedUser.id).maybeSingle()
-      ]);
-
-      let updatedUser = { ...parsedUser };
-      
-      if (freshStudentData) {
-        updatedUser = { ...freshStudentData, role: 'student', teacher_school_name: updatedUser.teacher_school_name };
-      }
-
-      if (teacherData && teacherData.school_name) {
-        updatedUser.teacher_school_name = teacherData.school_name;
-      }
-      
-      setUser(updatedUser);
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-
-      // Check if student has evaluated the platform
-      const { data: evalData } = await supabase
-        .from('student_evaluations')
-        .select('id')
-        .eq('student_id', updatedUser.id)
-        .limit(1);
-      
-      if (!evalData || evalData.length === 0) {
-        setIsEvaluationModalOpen(true);
-      }
-      
-      if (settingsData) {
-        setAcademicYear(settingsData.value || '2567');
-      }
-
-      if (results && results.length > 0) {
-        setAllTestResults(results);
-        const resultsByYear = {};
-        const allWeaknesses = new Set();
+      try {
+        const userData = localStorage.getItem('user');
+        if (!userData) {
+          navigate('/login');
+          return;
+        }
         
-        results.forEach(r => {
-          const year = r.exam_year || 'O-NET 65';
-          if (!resultsByYear[year]) {
-            resultsByYear[year] = { pre: null, post: null };
-          }
-          // Since it's ordered by completed_at desc, the first one we see is the newest
-          if (r.subject === 'Science' && !resultsByYear[year].pre) {
-            resultsByYear[year].pre = r;
-            if (r.weaknesses) r.weaknesses.forEach(w => allWeaknesses.add(w));
-          } else if (r.subject === 'Science (Post-test)' && !resultsByYear[year].post) {
-            resultsByYear[year].post = r;
-          }
-        });
+        const parsedUser = JSON.parse(userData);
+        let updatedUser = parsedUser;
         
-        setTestResultsByYear(resultsByYear);
+        const [
+          { data: settingsData },
+          { data: results },
+          { data: freshStudentData },
+          { data: teacherData }
+        ] = await Promise.all([
+          supabase.from('settings').select('value').eq('key', 'current_academic_year').maybeSingle(),
+          supabase.from('test_results').select('*').eq('student_id', parsedUser.id).order('completed_at', { ascending: false }),
+          supabase.from('students').select('*').eq('id', parsedUser.id).maybeSingle(),
+          supabase.from('teachers').select('school_name').eq('id', parsedUser.teacher_id).maybeSingle()
+        ]);
         
-        if (allWeaknesses.size > 0) {
-          const { data: contents } = await supabase
-            .from('indicators')
-            .select('*')
-            .eq('teacher_id', parsedUser.teacher_id)
-            .in('indicator_code', Array.from(allWeaknesses));
-            
-          if (contents) {
-            const contentsByYear = {};
-            Object.keys(resultsByYear).forEach(year => {
-              if (resultsByYear[year].pre && resultsByYear[year].pre.weaknesses) {
-                 contentsByYear[year] = contents.filter(c => resultsByYear[year].pre.weaknesses.includes(c.indicator_code));
-              }
-            });
-            setRemedialContentsByYear(contentsByYear);
+        if (freshStudentData) {
+          updatedUser = { ...freshStudentData, role: 'student', teacher_school_name: updatedUser.teacher_school_name };
+        }
+
+        if (teacherData && teacherData.school_name) {
+          updatedUser.teacher_school_name = teacherData.school_name;
+        }
+        
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+
+        // Check if student has evaluated the platform
+        const { data: evalData } = await supabase
+          .from('student_evaluations')
+          .select('id')
+          .eq('student_id', updatedUser.id)
+          .limit(1);
+        
+        if (!evalData || evalData.length === 0) {
+          setIsEvaluationModalOpen(true);
+        }
+        
+        if (settingsData) {
+          setAcademicYear(settingsData.value || '2567');
+        }
+
+        if (results && results.length > 0) {
+          setAllTestResults(results);
+          const resultsByYear = {};
+          const allWeaknesses = new Set();
+          
+          results.forEach(r => {
+            const year = r.exam_year || 'O-NET 65';
+            if (!resultsByYear[year]) {
+              resultsByYear[year] = { pre: null, post: null };
+            }
+            // Since it's ordered by completed_at desc, the first one we see is the newest
+            if (r.subject === 'Science' && !resultsByYear[year].pre) {
+              resultsByYear[year].pre = r;
+              if (r.weaknesses) r.weaknesses.forEach(w => allWeaknesses.add(w));
+            } else if (r.subject === 'Science (Post-test)' && !resultsByYear[year].post) {
+              resultsByYear[year].post = r;
+            }
+          });
+          
+          setTestResultsByYear(resultsByYear);
+          
+          if (allWeaknesses.size > 0) {
+            const { data: contents } = await supabase
+              .from('indicators')
+              .select('*')
+              .eq('teacher_id', parsedUser.teacher_id)
+              .in('indicator_code', Array.from(allWeaknesses));
+              
+            if (contents) {
+              const contentsByYear = {};
+              Object.keys(resultsByYear).forEach(year => {
+                if (resultsByYear[year].pre && resultsByYear[year].pre.weaknesses) {
+                   contentsByYear[year] = contents.filter(c => resultsByYear[year].pre.weaknesses.includes(c.indicator_code));
+                }
+              });
+              setRemedialContentsByYear(contentsByYear);
+            }
           }
         }
-      }
 
-      const { data: qData } = await supabase.from('questions').select('exam_year').neq('exam_year', 'LESSON');
-      if (qData && qData.length > 0) {
-        const uniqueYears = [...new Set(qData.map(q => q.exam_year))].sort().reverse();
-        setExamYears(uniqueYears);
+        const { data: qData } = await supabase.from('questions').select('exam_year').neq('exam_year', 'LESSON');
+        if (qData && qData.length > 0) {
+          const uniqueYears = [...new Set(qData.map(q => q.exam_year))].sort().reverse();
+          setExamYears(uniqueYears);
+        }
+      } catch (error) {
+        console.error("Dashboard error:", error);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     }
     
     fetchData();

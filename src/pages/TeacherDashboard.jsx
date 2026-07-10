@@ -78,73 +78,78 @@ export default function TeacherDashboard() {
       return;
     }
     const parsedUser = JSON.parse(userData);
-    if (parsedUser.role !== 'teacher' && parsedUser.role !== 'admin') {
-      navigate('/');
-      return;
-    }
-    setUser(parsedUser);
-
     async function fetchData() {
-      const isAdmin = parsedUser.role === 'admin';
-      
-      const [
-        { data: studentsData },
-        { data: resultsData },
-        { data: questionsData },
-        { data: indicatorsData },
-        { data: settingsData },
-        { data: permissionsData },
-        { data: freshUserData },
-        { data: allTeachersData }
-      ] = await Promise.all([
-        isAdmin ? supabase.from('students').select('*').order('created_at', { ascending: true }) : supabase.from('students').select('*').eq('teacher_id', parsedUser.id).order('created_at', { ascending: true }),
-        isAdmin ? supabase.from('test_results').select('*') : supabase.from('test_results').select('*').eq('teacher_id', parsedUser.id),
-        isAdmin ? supabase.from('questions').select('*').order('created_at', { ascending: true }) : supabase.from('questions').select('*').or(`exam_year.neq.LESSON,teacher_id.eq.${parsedUser.id}`).order('created_at', { ascending: true }),
-        isAdmin ? supabase.from('indicators').select('*').order('id', { ascending: true }) : supabase.from('indicators').select('*').eq('teacher_id', parsedUser.id).order('id', { ascending: true }),
-        supabase.from('settings').select('value').eq('key', 'current_academic_year').maybeSingle(),
-        supabase.from('settings').select('value').eq('key', `permissions_${parsedUser.id}`).maybeSingle(),
-        supabase.from('teachers').select('*').eq('id', parsedUser.id).maybeSingle(),
-        supabase.from('teachers').select('id, name, username, school_name')
-      ]);
+      try {
+        const userData = localStorage.getItem('user');
+        if (!userData) {
+          navigate('/login');
+          return;
+        }
+        
+        const parsedUser = JSON.parse(userData);
+        const isAdmin = parsedUser.role === 'admin';
+        
+        const [
+          { data: studentsData },
+          { data: resultsData },
+          { data: questionsData },
+          { data: indicatorsData },
+          { data: settingsData },
+          { data: permissionsData },
+          { data: freshUserData },
+          { data: allTeachersData }
+        ] = await Promise.all([
+          isAdmin ? supabase.from('students').select('*').order('created_at', { ascending: true }) : supabase.from('students').select('*').eq('teacher_id', parsedUser.id).order('created_at', { ascending: true }),
+          isAdmin ? supabase.from('test_results').select('*') : supabase.from('test_results').select('*').eq('teacher_id', parsedUser.id),
+          isAdmin ? supabase.from('questions').select('*').order('created_at', { ascending: true }) : supabase.from('questions').select('*').or(`exam_year.neq.LESSON,teacher_id.eq.${parsedUser.id}`).order('created_at', { ascending: true }),
+          isAdmin ? supabase.from('indicators').select('*').order('id', { ascending: true }) : supabase.from('indicators').select('*').eq('teacher_id', parsedUser.id).order('id', { ascending: true }),
+          supabase.from('settings').select('value').eq('key', 'current_academic_year').maybeSingle(),
+          supabase.from('settings').select('value').eq('key', `permissions_${parsedUser.id}`).maybeSingle(),
+          supabase.from('teachers').select('*').eq('id', parsedUser.id).maybeSingle(),
+          supabase.from('teachers').select('id, name, username, school_name')
+        ]);
 
-      if (studentsData) setStudents(studentsData);
-      if (resultsData) setTestResults(resultsData);
-      if (questionsData) setQuestions(questionsData);
-      if (indicatorsData) setIndicators(indicatorsData);
-      if (allTeachersData) setTeachersList(allTeachersData);
-      
-      if (permissionsData && permissionsData.value) {
-        try {
-          const parsedPerms = JSON.parse(permissionsData.value);
-          setUserPermissions(prev => ({...prev, ...parsedPerms}));
-        } catch(e) { console.error(e); }
-      }
-      
-      if (freshUserData) {
-        const updatedUser = { ...freshUserData, role: freshUserData.role || 'teacher' };
-        setUser(updatedUser);
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-      }
-      
-      if (settingsData) {
-        setAcademicYear(settingsData.value || '2567');
-      } else {
-        // Fallback or fetching failed
-        setAcademicYear('2567');
-      }
+        if (studentsData) setStudents(studentsData);
+        if (resultsData) setTestResults(resultsData);
+        if (questionsData) setQuestions(questionsData);
+        if (indicatorsData) setIndicators(indicatorsData);
+        if (allTeachersData) setTeachersList(allTeachersData);
+        
+        if (permissionsData && permissionsData.value) {
+          try {
+            const parsedPerms = JSON.parse(permissionsData.value);
+            setUserPermissions(prev => ({...prev, ...parsedPerms}));
+          } catch(e) { console.error(e); }
+        }
+        
+        if (freshUserData) {
+          const updatedUser = { ...freshUserData, role: freshUserData.role || 'teacher' };
+          setUser(updatedUser);
+          localStorage.setItem('user', JSON.stringify(updatedUser));
+        }
+        
+        if (settingsData) {
+          setAcademicYear(settingsData.value || '2567');
+        } else {
+          // Fallback or fetching failed
+          setAcademicYear('2567');
+        }
 
-      // Check if teacher has evaluated the platform
-      const { data: evalData } = await supabase
-        .from('teacher_evaluations')
-        .select('id')
-        .eq('teacher_id', parsedUser.id)
-        .limit(1);
-      
-      if (!evalData || evalData.length === 0) {
-        setIsEvaluationModalOpen(true);
+        // Check if teacher has evaluated the platform
+        const { data: evalData } = await supabase
+          .from('teacher_evaluations')
+          .select('id')
+          .eq('teacher_id', parsedUser.id)
+          .limit(1);
+        
+        if (!evalData || evalData.length === 0) {
+          setIsEvaluationModalOpen(true);
+        }
+      } catch (error) {
+        console.error("Teacher Dashboard error:", error);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     }
 
     fetchData();
