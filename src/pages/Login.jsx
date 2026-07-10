@@ -11,6 +11,15 @@ export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [isRegistering, setIsRegistering] = useState(false);
+  
+  // Registration fields
+  const [regName, setRegName] = useState('');
+  const [regSchoolName, setRegSchoolName] = useState('');
+  const [regPhone, setRegPhone] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -47,6 +56,10 @@ export default function Login() {
 
         if (dbError || !data) {
           setError('ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง');
+        } else if (data.status === 'pending') {
+          setError('บัญชีของคุณกำลังรอการอนุมัติจากผู้ดูแลระบบ กรุณารอการติดต่อกลับ');
+        } else if (data.status === 'suspended') {
+          setError('บัญชีของคุณถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลระบบ');
         } else {
           localStorage.setItem('user', JSON.stringify({ ...data, role: data.role || 'teacher' }));
           navigate('/teacher-dashboard');
@@ -56,6 +69,55 @@ export default function Login() {
       }
     }
   };
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    
+    if (!username || !password || !regName || !regSchoolName || !regPhone || !regEmail) {
+      setError('กรุณากรอกข้อมูลให้ครบถ้วน');
+      return;
+    }
+    
+    try {
+      // Check if username exists
+      const { data: existing } = await supabase
+        .from('teachers')
+        .select('username')
+        .eq('username', username)
+        .maybeSingle();
+        
+      if (existing) {
+        setError('ชื่อผู้ใช้งานนี้มีคนใช้แล้ว กรุณาเลือกชื่ออื่น');
+        return;
+      }
+      
+      const { error: insertError } = await supabase
+        .from('teachers')
+        .insert([{
+          username,
+          password_hash: password,
+          name: regName,
+          school_name: regSchoolName,
+          phone: regPhone,
+          email: regEmail,
+          role: 'teacher',
+          status: 'pending' // New users need approval
+        }]);
+        
+      if (insertError) {
+        setError(`เกิดข้อผิดพลาดในการสมัครสมาชิก: ${insertError.message}`);
+      } else {
+        setSuccess('สมัครสมาชิกสำเร็จ! กรุณารอผู้ดูแลระบบอนุมัติบัญชีของคุณ');
+        setIsRegistering(false);
+        setPassword('');
+      }
+    } catch (err) {
+      setError('เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล');
+    }
+  };
+
 
   return (
     <div className="login-container min-h-screen flex-center">
@@ -85,8 +147,9 @@ export default function Login() {
           </button>
         </div>
 
-        <form onSubmit={handleLogin} className="login-form">
-          {error && <div className="error-message">{error}</div>}
+        <form onSubmit={role === 'teacher' && isRegistering ? handleRegister : handleLogin} className="login-form">
+          {error && <div className="error-message" style={{marginBottom: '1rem', padding: '0.75rem', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.3)'}}>{error}</div>}
+          {success && <div className="success-message" style={{marginBottom: '1rem', padding: '0.75rem', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.3)'}}>{success}</div>}
 
           {role === 'student' ? (
             <div className="input-group">
@@ -107,8 +170,73 @@ export default function Login() {
             </div>
           ) : (
             <>
+              {isRegistering && (
+                <>
+                  <div className="input-group">
+                    <label htmlFor="regName">ชื่อ-นามสกุล</label>
+                    <div className="input-with-icon">
+                      <User className="input-icon" size={20} />
+                      <input 
+                        type="text" 
+                        id="regName"
+                        className="input-field" 
+                        placeholder="ชื่อ-นามสกุล"
+                        value={regName}
+                        onChange={(e) => setRegName(e.target.value)}
+                        required 
+                      />
+                    </div>
+                  </div>
+                  <div className="input-group">
+                    <label htmlFor="regSchoolName">ชื่อโรงเรียน</label>
+                    <div className="input-with-icon">
+                      <BookOpen className="input-icon" size={20} />
+                      <input 
+                        type="text" 
+                        id="regSchoolName"
+                        className="input-field" 
+                        placeholder="เช่น โรงเรียนเหล่าหลวงวิทยาคาร"
+                        value={regSchoolName}
+                        onChange={(e) => setRegSchoolName(e.target.value)}
+                        required 
+                      />
+                    </div>
+                  </div>
+                  <div className="input-group">
+                    <label htmlFor="regPhone">เบอร์โทรศัพท์</label>
+                    <div className="input-with-icon">
+                      <User className="input-icon" size={20} />
+                      <input 
+                        type="text" 
+                        id="regPhone"
+                        className="input-field" 
+                        placeholder="เบอร์โทรศัพท์"
+                        value={regPhone}
+                        onChange={(e) => setRegPhone(e.target.value)}
+                        required 
+                      />
+                    </div>
+                  </div>
+                  <div className="input-group">
+                    <label htmlFor="regEmail">อีเมล (Email)</label>
+                    <div className="input-with-icon">
+                      <User className="input-icon" size={20} />
+                      <input 
+                        type="email" 
+                        id="regEmail"
+                        className="input-field" 
+                        placeholder="อีเมล"
+                        value={regEmail}
+                        onChange={(e) => setRegEmail(e.target.value)}
+                        required 
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+              
               <div className="input-group">
-                <label htmlFor="username">ชื่อผู้ใช้งาน</label>
+                <label htmlFor="username">ชื่อผู้ใช้งาน (Username)</label>
                 <div className="input-with-icon">
                   <User className="input-icon" size={20} />
                   <input 
@@ -123,7 +251,7 @@ export default function Login() {
                 </div>
               </div>
               <div className="input-group">
-                <label htmlFor="password">รหัสผ่าน</label>
+                <label htmlFor="password">รหัสผ่าน (Password)</label>
                 <div className="input-with-icon">
                   <Lock className="input-icon" size={20} />
                   <input 
@@ -141,8 +269,36 @@ export default function Login() {
           )}
 
           <button type="submit" className="btn btn-primary login-submit-btn">
-            เข้าสู่ระบบ <ArrowRight size={20} />
+            {role === 'teacher' && isRegistering ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ'} <ArrowRight size={20} />
           </button>
+          
+          {role === 'teacher' && (
+            <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+              <span style={{ color: 'var(--text-light)', fontSize: '0.95rem' }}>
+                {isRegistering ? 'มีบัญชีอยู่แล้ว?' : 'ยังไม่มีบัญชี?'} 
+              </span>
+              <button 
+                type="button" 
+                onClick={() => {
+                  setIsRegistering(!isRegistering);
+                  setError('');
+                  setSuccess('');
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--primary)',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  marginLeft: '0.5rem',
+                  textDecoration: 'underline'
+                }}
+              >
+                {isRegistering ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก'}
+              </button>
+            </div>
+          )}
+
         </form>
       </div>
     </div>

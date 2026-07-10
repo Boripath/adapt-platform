@@ -6,7 +6,7 @@ export default function AdminManagement({ user, setAcademicYear, academicYear })
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [form, setForm] = useState({ id: null, username: '', password_hash: '', name: '', school_name: '', phone: '' });
+  const [form, setForm] = useState({ id: null, username: '', password_hash: '', name: '', school_name: '', phone: '', email: '', status: 'approved' });
   const [formPermissions, setFormPermissions] = useState({
     allow_add_question: true,
     allow_edit_question: true,
@@ -70,7 +70,7 @@ export default function AdminManagement({ user, setAcademicYear, academicYear })
         });
       }
     } else {
-      setForm({ id: null, username: '', password_hash: '', name: '', school_name: '', phone: '' });
+      setForm({ id: null, username: '', password_hash: '', name: '', school_name: '', phone: '', email: '', status: 'approved' });
       setFormPermissions({
         allow_add_question: true, allow_edit_question: true, allow_delete_question: true,
         allow_reorder_question: true, allow_add_indicator: true, allow_edit_indicator: true
@@ -87,6 +87,8 @@ export default function AdminManagement({ user, setAcademicYear, academicYear })
       name: form.name,
       school_name: form.school_name,
       phone: form.phone,
+      email: form.email,
+      status: form.status,
       role: 'teacher'
     };
 
@@ -110,6 +112,21 @@ export default function AdminManagement({ user, setAcademicYear, academicYear })
       }
     }
   };
+
+  const handleUpdateStatus = async (id, newStatus) => {
+    if (!window.confirm(`คุณแน่ใจหรือไม่ที่จะเปลี่ยนสถานะเป็น ${newStatus}?`)) return;
+    
+    setActionLoading(`status-${id}`);
+    const { data, error } = await supabase.from('teachers').update({ status: newStatus }).eq('id', id).select();
+    
+    if (!error && data) {
+      setTeachers(teachers.map(t => t.id === id ? data[0] : t));
+    } else {
+      alert('เกิดข้อผิดพลาดในการเปลี่ยนสถานะ: ' + (error?.message || 'Unknown'));
+    }
+    setActionLoading(null);
+  };
+
 
   const handleDeleteTeacher = async (id) => {
     if (window.confirm('คุณแน่ใจหรือไม่ที่จะลบบัญชีนี้? ข้อมูลทั้งหมดของครูท่านนี้จะถูกลบ (อาจใช้เวลาสักครู่)')) {
@@ -267,6 +284,8 @@ export default function AdminManagement({ user, setAcademicYear, academicYear })
                   <th>ชื่อ-นามสกุล</th>
                   <th>โรงเรียน</th>
                   <th>เบอร์โทร</th>
+                  <th>อีเมล</th>
+                  <th>สถานะ</th>
                   <th>จัดการข้อมูล</th>
                   <th>คัดลอกต้นแบบให้ User</th>
                 </tr>
@@ -278,6 +297,16 @@ export default function AdminManagement({ user, setAcademicYear, academicYear })
                     <td>{teacher.name}</td>
                     <td>{teacher.school_name || '-'}</td>
                     <td>{teacher.phone || '-'}</td>
+                    <td>{teacher.email || '-'}</td>
+                    <td>
+                      <span className="badge" style={{
+                        background: teacher.status === 'pending' ? 'rgba(245, 158, 11, 0.1)' : teacher.status === 'suspended' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                        color: teacher.status === 'pending' ? '#d97706' : teacher.status === 'suspended' ? '#ef4444' : '#10b981',
+                        padding: '4px 8px', borderRadius: '4px'
+                      }}>
+                        {teacher.status === 'pending' ? 'รออนุมัติ' : teacher.status === 'suspended' ? 'ระงับใช้งาน' : 'ใช้งานปกติ'}
+                      </span>
+                    </td>
                     <td>
                       <div className="flex-center gap-2">
                         <button className="btn-icon" onClick={() => handleOpenModal(teacher)} title="แก้ไข">
@@ -289,6 +318,37 @@ export default function AdminManagement({ user, setAcademicYear, academicYear })
                       </div>
                     </td>
                     <td>
+                      <div className="flex-center gap-2 flex-wrap mb-2">
+                        {teacher.status === 'pending' && (
+                          <button 
+                            className="btn btn-outline btn-sm" 
+                            style={{borderColor: '#10b981', color: '#10b981'}}
+                            onClick={() => handleUpdateStatus(teacher.id, 'approved')}
+                            disabled={actionLoading === `status-${teacher.id}`}
+                          >
+                            <CheckCircle size={14} /> อนุมัติใช้งาน
+                          </button>
+                        )}
+                        {(teacher.status === 'approved' || !teacher.status) && (
+                          <button 
+                            className="btn btn-outline btn-sm text-red" 
+                            onClick={() => handleUpdateStatus(teacher.id, 'suspended')}
+                            disabled={actionLoading === `status-${teacher.id}`}
+                          >
+                            <Trash2 size={14} /> ระงับใช้งาน
+                          </button>
+                        )}
+                        {teacher.status === 'suspended' && (
+                          <button 
+                            className="btn btn-outline btn-sm" 
+                            style={{borderColor: '#10b981', color: '#10b981'}}
+                            onClick={() => handleUpdateStatus(teacher.id, 'approved')}
+                            disabled={actionLoading === `status-${teacher.id}`}
+                          >
+                            <CheckCircle size={14} /> ปลดระงับ
+                          </button>
+                        )}
+                      </div>
                       <div className="flex-center gap-2 flex-wrap">
                         <button 
                           className="btn btn-outline btn-sm text-primary" 
@@ -340,9 +400,21 @@ export default function AdminManagement({ user, setAcademicYear, academicYear })
                 <label>ชื่อโรงเรียน</label>
                 <input required type="text" className="input-field" value={form.school_name} onChange={e => setForm({...form, school_name: e.target.value})} />
               </div>
-              <div className="input-group mb-4">
+              <div className="input-group">
                 <label>เบอร์โทร</label>
-                <input type="text" className="input-field" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
+                <input type="text" className="input-field" value={form.phone || ''} onChange={e => setForm({...form, phone: e.target.value})} />
+              </div>
+              <div className="input-group">
+                <label>อีเมล (Email)</label>
+                <input type="email" className="input-field" value={form.email || ''} onChange={e => setForm({...form, email: e.target.value})} />
+              </div>
+              <div className="input-group mb-4">
+                <label>สถานะบัญชี</label>
+                <select className="input-field" value={form.status || 'approved'} onChange={e => setForm({...form, status: e.target.value})}>
+                  <option value="approved">ใช้งานปกติ (Approved)</option>
+                  <option value="pending">รออนุมัติ (Pending)</option>
+                  <option value="suspended">ระงับการใช้งาน (Suspended)</option>
+                </select>
               </div>
               
               <div style={{ marginTop: '1.5rem', marginBottom: '1.5rem', padding: '1rem', background: 'rgba(79, 70, 229, 0.05)', borderRadius: '8px' }}>
