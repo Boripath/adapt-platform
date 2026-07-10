@@ -70,24 +70,23 @@ export default function BulkStudentModal({
         
         <form onSubmit={handleSubmit} style={{marginTop: '1rem'}}>
           <div className="table-responsive" style={{maxHeight: '60vh', overflowY: 'auto'}}>
-            <table className="table" style={{width: '100%'}}>
-              <thead style={{position: 'sticky', top: 0, background: 'var(--bg-card)', zIndex: 1}}>
+            <table className="table" style={{width: '100%', borderCollapse: 'collapse'}}>
+              <thead style={{position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1, boxShadow: '0 1px 2px rgba(0,0,0,0.1)'}}>
                 <tr>
-                  <th style={{width: '50px', textAlign: 'center'}}>ลำดับ</th>
-                  <th style={{width: '30%'}}>รหัสประจำตัวประชาชน 13 หลัก</th>
-                  <th style={{width: '40%'}}>ชื่อ - นามสกุล</th>
-                  <th style={{width: '30%'}}>ชั้นเรียน</th>
+                  <th style={{width: '50px', textAlign: 'center', border: '1px solid #cbd5e1', padding: '0.5rem', background: '#e2e8f0', color: '#334155'}}>ลำดับ</th>
+                  <th style={{width: '30%', border: '1px solid #cbd5e1', padding: '0.5rem', color: '#334155'}}>รหัสประจำตัวประชาชน 13 หลัก</th>
+                  <th style={{width: '40%', border: '1px solid #cbd5e1', padding: '0.5rem', color: '#334155'}}>ชื่อ - นามสกุล</th>
+                  <th style={{width: '30%', border: '1px solid #cbd5e1', padding: '0.5rem', color: '#334155'}}>ชั้นเรียน</th>
                 </tr>
               </thead>
               <tbody>
                 {grid.map((row, rowIndex) => (
                   <tr key={rowIndex}>
-                    <td style={{textAlign: 'center'}}>{rowIndex + 1}</td>
-                    <td>
+                    <td style={{textAlign: 'center', border: '1px solid #cbd5e1', background: '#f1f5f9', color: '#64748b', fontWeight: 'bold'}}>{rowIndex + 1}</td>
+                    <td style={{border: '1px solid #cbd5e1', padding: 0}}>
                       <input 
                         type="text" 
-                        className="input-field" 
-                        style={{padding: '0.5rem', fontSize: '0.9rem', marginBottom: 0}}
+                        style={{width: '100%', padding: '0.5rem', border: 'none', outline: 'none', background: 'transparent', fontSize: '0.9rem'}}
                         value={row[0]} 
                         onChange={(e) => handleInputChange(e, rowIndex, 0)}
                         onPaste={(e) => handlePaste(e, rowIndex, 0)}
@@ -95,22 +94,20 @@ export default function BulkStudentModal({
                         maxLength={13}
                       />
                     </td>
-                    <td>
+                    <td style={{border: '1px solid #cbd5e1', padding: 0}}>
                       <input 
                         type="text" 
-                        className="input-field" 
-                        style={{padding: '0.5rem', fontSize: '0.9rem', marginBottom: 0}}
+                        style={{width: '100%', padding: '0.5rem', border: 'none', outline: 'none', background: 'transparent', fontSize: '0.9rem'}}
                         value={row[1]} 
                         onChange={(e) => handleInputChange(e, rowIndex, 1)}
                         onPaste={(e) => handlePaste(e, rowIndex, 1)}
                         placeholder="ชื่อ-นามสกุล"
                       />
                     </td>
-                    <td>
+                    <td style={{border: '1px solid #cbd5e1', padding: 0}}>
                       <input 
                         type="text" 
-                        className="input-field" 
-                        style={{padding: '0.5rem', fontSize: '0.9rem', marginBottom: 0}}
+                        style={{width: '100%', padding: '0.5rem', border: 'none', outline: 'none', background: 'transparent', fontSize: '0.9rem'}}
                         value={row[2]} 
                         onChange={(e) => handleInputChange(e, rowIndex, 2)}
                         onPaste={(e) => handlePaste(e, rowIndex, 2)}

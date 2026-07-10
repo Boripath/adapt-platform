@@ -140,7 +140,7 @@ export default function PlatformEvaluationModal({ isOpen, onClose, user }) {
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
               <button type="button" className="btn btn-outline" onClick={onClose} disabled={isSubmitting}>
-                ยกเลิก
+                ยังไม่ประเมินตอนนี้
               </button>
               <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
                 {isSubmitting ? 'กำลังบันทึก...' : 'ส่งผลประเมิน'}

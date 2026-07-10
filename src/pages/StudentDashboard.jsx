@@ -68,6 +68,17 @@ export default function StudentDashboard() {
       
       setUser(updatedUser);
       localStorage.setItem('user', JSON.stringify(updatedUser));
+
+      // Check if student has evaluated the platform
+      const { data: evalData } = await supabase
+        .from('student_evaluations')
+        .select('id')
+        .eq('student_id', updatedUser.id)
+        .limit(1);
+      
+      if (!evalData || evalData.length === 0) {
+        setIsEvaluationModalOpen(true);
+      }
       
       if (settingsData) {
         setAcademicYear(settingsData.value || '2567');

@@ -132,6 +132,18 @@ export default function TeacherDashboard() {
         // Fallback or fetching failed
         setAcademicYear('2567');
       }
+
+      // Check if teacher has evaluated the platform
+      const { data: evalData } = await supabase
+        .from('teacher_evaluations')
+        .select('id')
+        .eq('teacher_id', parsedUser.id)
+        .limit(1);
+      
+      if (!evalData || evalData.length === 0) {
+        setIsEvaluationModalOpen(true);
+      }
+
       setLoading(false);
     }
 

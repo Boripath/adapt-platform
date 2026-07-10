@@ -24,6 +24,7 @@ export default function LessonRoom() {
   const [startTime] = useState(() => new Date().toISOString());
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     async function fetchData() {
       const userData = localStorage.getItem('user');
       const user = userData ? JSON.parse(userData) : null;

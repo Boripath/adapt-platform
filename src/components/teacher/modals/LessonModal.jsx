@@ -70,9 +70,44 @@ export default function LessonModal({
               value={indicatorForm.core_content || ''} onChange={e => setIndicatorForm({...indicatorForm, core_content: e.target.value})}></textarea>
           </div>
           <div className="input-group">
-            <label>ลิงก์ VDO การสอน (Youtube URL) - ปล่อยว่างเพื่อใช้ค่าเริ่มต้น</label>
-            <input type="text" className="input-field" placeholder="https://youtube.com/..."
-              value={indicatorForm.vdo_url || ''} onChange={e => setIndicatorForm({...indicatorForm, vdo_url: e.target.value})} />
+            <label>ลิงก์ VDO การสอน (Youtube หรือลิงก์ภายนอก) - ลิงก์แรกจะเป็นค่าเริ่มต้นค้นหาจาก YouTube เสมอ</label>
+            {(() => {
+              let urls = [];
+              try {
+                urls = indicatorForm.vdo_url ? (indicatorForm.vdo_url.startsWith('[') ? JSON.parse(indicatorForm.vdo_url) : [indicatorForm.vdo_url]) : [];
+              } catch (e) {
+                urls = [indicatorForm.vdo_url];
+              }
+              if (urls.length === 0) urls = [''];
+
+              const updateUrl = (index, value) => {
+                const newUrls = [...urls];
+                newUrls[index] = value;
+                setIndicatorForm({...indicatorForm, vdo_url: JSON.stringify(newUrls.filter(u => u.trim() !== ''))});
+              };
+
+              const addUrl = () => {
+                setIndicatorForm({...indicatorForm, vdo_url: JSON.stringify([...urls, ''])});
+              };
+
+              const removeUrl = (index) => {
+                const newUrls = urls.filter((_, i) => i !== index);
+                setIndicatorForm({...indicatorForm, vdo_url: JSON.stringify(newUrls)});
+              };
+
+              return (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '0.5rem'}}>
+                  {urls.map((u, i) => (
+                    <div key={i} style={{display: 'flex', gap: '0.5rem'}}>
+                      <input type="text" className="input-field" placeholder="https://youtube.com/..." style={{marginBottom: 0, flex: 1}}
+                        value={u} onChange={e => updateUrl(i, e.target.value)} />
+                      <button type="button" className="btn btn-outline text-red" onClick={() => removeUrl(i)}>ลบ</button>
+                    </div>
+                  ))}
+                  <button type="button" className="btn btn-outline btn-sm" onClick={addUrl} style={{alignSelf: 'flex-start', marginTop: '0.5rem'}}>+ เพิ่มลิงก์อื่น</button>
+                </div>
+              );
+            })()}
           </div>
           <div style={{display: 'flex', gap: '1rem', marginTop: '2rem', justifyContent: 'flex-end'}}>
             <button type="button" className="btn btn-outline" onClick={() => setIsIndicatorModalOpen(false)}>ยกเลิก</button>
