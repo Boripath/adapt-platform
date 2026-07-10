@@ -22,24 +22,29 @@ export default function CurrentYearAnalytics({ testResults, questions, openIndic
     // Filter only pre-tests (subject === 'Science')
     const preTests = testResults.filter(r => r.subject === 'Science');
     
-    // Group by student_id to get only the latest result per student
+    // Group by student_id AND exam_year to get only the latest result per student per exam year
     const latestResultsMap = {};
     preTests.forEach(r => {
-      if (!latestResultsMap[r.student_id]) {
-        latestResultsMap[r.student_id] = r;
+      const year = r.exam_year || 'ไม่ระบุปี';
+      const key = `${r.student_id}_${year}`;
+      if (!latestResultsMap[key]) {
+        latestResultsMap[key] = r;
       } else {
-        const currentLatest = new Date(latestResultsMap[r.student_id].created_at || latestResultsMap[r.student_id].start_time || 0);
+        const currentLatest = new Date(latestResultsMap[key].created_at || latestResultsMap[key].start_time || 0);
         const thisTime = new Date(r.created_at || r.start_time || 0);
         if (thisTime > currentLatest) {
-          latestResultsMap[r.student_id] = r;
+          latestResultsMap[key] = r;
         }
       }
     });
     
     const uniqueResults = Object.values(latestResultsMap);
-    const totalStudents = uniqueResults.length;
     
-    if (totalStudents === 0) return { weakest: [], strongest: [], totalStudents: 0 };
+    // Count unique students for the display label
+    const uniqueStudents = new Set(uniqueResults.map(r => r.student_id)).size;
+    const totalAttempts = uniqueResults.length;
+    
+    if (totalAttempts === 0) return { weakest: [], strongest: [], totalStudents: 0, totalAttempts: 0 };
     
     // Map all available indicators from questions
     const indicatorSet = new Set();
@@ -69,7 +74,7 @@ export default function CurrentYearAnalytics({ testResults, questions, openIndic
     // Calculate percent correct
     const statsList = Object.keys(indicatorStats).map(ind => {
       const weakCount = indicatorStats[ind].weakCount;
-      const percentCorrect = ((totalStudents - weakCount) / totalStudents) * 100;
+      const percentCorrect = ((totalAttempts - weakCount) / totalAttempts) * 100;
       return {
         code: ind,
         avg: percentCorrect.toFixed(2)
@@ -79,7 +84,8 @@ export default function CurrentYearAnalytics({ testResults, questions, openIndic
     return {
       weakest: statsList.slice(0, topCount),
       strongest: [...statsList].reverse().slice(0, topCount),
-      totalStudents
+      totalStudents: uniqueStudents,
+      totalAttempts: totalAttempts
     };
   }, [testResults, questions, topCount]);
 
@@ -279,11 +285,11 @@ export default function CurrentYearAnalytics({ testResults, questions, openIndic
         <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem'}}>
           <h4 style={{ margin: 0 }}>ภาพรวมปีการศึกษาปัจจุบัน (Overall)</h4>
           <span className="badge" style={{background: 'var(--primary)', color: 'white', padding: '0.5rem 1rem', fontSize: '0.9rem'}}>
-            จำนวนนักเรียนที่เข้าสอบ (Pre-test): {analyticsData.totalStudents} คน
+            นักเรียนเข้าสอบ: {analyticsData.totalStudents} คน (รวม {analyticsData.totalAttempts} ครั้ง)
           </span>
         </div>
         
-        {analyticsData.totalStudents === 0 ? (
+        {analyticsData.totalAttempts === 0 ? (
           <div style={{padding: '2rem', textAlign: 'center', color: 'var(--text-light)'}}>
             ยังไม่มีข้อมูลการสอบของนักเรียนในปีนี้
           </div>
