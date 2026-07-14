@@ -14,6 +14,8 @@ import QuestionBankAnalytics from '../components/teacher/QuestionBankAnalytics';
 import HistoricalAnalytics from '../components/teacher/HistoricalAnalytics';
 import CurrentYearAnalytics from '../components/teacher/CurrentYearAnalytics';
 import AdminManagement from '../components/admin/AdminManagement';
+import AdminWorkflow from '../components/admin/AdminWorkflow';
+import TeacherManual from '../components/teacher/TeacherManual';
 import StudentModal from '../components/teacher/modals/StudentModal';
 import QuestionModal from '../components/teacher/modals/QuestionModal';
 import LessonModal from '../components/teacher/modals/LessonModal';
@@ -645,7 +647,9 @@ export default function TeacherDashboard() {
         {activeTab === 'question-analytics' && <QuestionBankAnalytics user={user} openIndicatorInfo={openIndicatorInfo} />}
         {activeTab === 'historical-analytics' && <HistoricalAnalytics questions={questions} getQuestionPreview={getQuestionPreview} openIndicatorInfo={openIndicatorInfo} user={user} />}
         {activeTab === 'current-year-analytics' && <CurrentYearAnalytics testResults={testResults} questions={questions} openIndicatorInfo={openIndicatorInfo} user={user} students={students} teachersList={teachersList} />}
+        {activeTab === 'manual' && <TeacherManual />}
         {activeTab === 'admin' && user.role === 'admin' && <AdminManagement user={user} setAcademicYear={setAcademicYear} academicYear={academicYear} />}
+        {activeTab === 'admin-workflow' && user.role === 'admin' && <AdminWorkflow />}
       </main>
 
       <StudentModal isStudentModalOpen={isStudentModalOpen} setIsStudentModalOpen={setIsStudentModalOpen} studentForm={studentForm} setStudentForm={setStudentForm} handleSaveStudent={handleSaveStudent} />

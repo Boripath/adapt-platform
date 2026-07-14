@@ -7,6 +7,9 @@ import StudentHeader from '../components/student/StudentHeader';
 import SubjectSelection from '../components/student/SubjectSelection';
 import ExamYearBlock from '../components/student/ExamYearBlock';
 import PlatformEvaluationModal from '../components/common/PlatformEvaluationModal';
+import PreTestComponent from '../components/student/PreTestComponent';
+import PostTestComponent from '../components/student/PostTestComponent';
+import StudentManual from '../components/student/StudentManual';
 
 import CurrentYearAnalytics from '../components/teacher/CurrentYearAnalytics';
 
@@ -14,6 +17,7 @@ export default function StudentDashboard() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [showManual, setShowManual] = useState(false);
   const [globalData, setGlobalData] = useState({ testResults: [], questions: [], students: [], teachersList: [] });
   const [loadingAnalytics, setLoadingAnalytics] = useState(false);
   const [testResultsByYear, setTestResultsByYear] = useState({});
@@ -151,13 +155,14 @@ export default function StudentDashboard() {
     navigate('/');
   };
 
+  const handleOpenManual = () => {
+    setShowManual(true);
+    setShowAnalytics(false);
+  };
+  
   const handleOpenAnalytics = async () => {
-    if (showAnalytics) {
-      setShowAnalytics(false);
-      return;
-    }
-    
     setShowAnalytics(true);
+    setShowManual(false);
     if (globalData.testResults.length === 0) {
       setLoadingAnalytics(true);
       const [
@@ -187,10 +192,15 @@ export default function StudentDashboard() {
 
   return (
     <div className="dashboard-container">
-      <StudentHeader user={user} handleLogout={handleLogout} academicYear={academicYear} openEvaluationModal={() => setIsEvaluationModalOpen(true)} openAnalytics={handleOpenAnalytics} />
+      <StudentHeader user={user} handleLogout={handleLogout} academicYear={academicYear} openEvaluationModal={() => setIsEvaluationModalOpen(true)} openAnalytics={handleOpenAnalytics} openManual={handleOpenManual} />
 
       <main className="dashboard-main">
-        {showAnalytics ? (
+        {showManual ? (
+           <div style={{marginTop: '1rem'}}>
+               <button className="btn btn-outline mb-4" onClick={() => setShowManual(false)}>← กลับไปหน้าหลัก</button>
+               <StudentManual />
+           </div>
+        ) : showAnalytics ? (
           loadingAnalytics ? (
             <div style={{padding: '3rem', textAlign: 'center'}}>กำลังโหลดข้อมูลอันดับ...</div>
           ) : (

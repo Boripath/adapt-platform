@@ -1,6 +1,6 @@
 import { LogOut } from 'lucide-react';
 
-export default function StudentHeader({ user, handleLogout, academicYear = '2567', openEvaluationModal, openAnalytics }) {
+export default function StudentHeader({ user, handleLogout, academicYear = '2567', openEvaluationModal, openAnalytics, openManual }) {
   return (
     <header className="dashboard-header glass-panel">
       <div className="header-content">
@@ -13,6 +13,11 @@ export default function StudentHeader({ user, handleLogout, academicYear = '2567
           </div>
         </div>
         <div style={{display: 'flex', gap: '0.5rem', alignItems: 'center'}}>
+          {openManual && (
+            <button onClick={openManual} className="btn btn-outline" style={{borderColor: '#10b981', color: '#10b981'}}>
+              คู่มือการใช้งาน
+            </button>
+          )}
           {openAnalytics && (
             <button onClick={openAnalytics} className="btn btn-outline" style={{borderColor: '#8b5cf6', color: '#8b5cf6'}}>
               ผลการทดสอบปีการศึกษาปัจจุบัน

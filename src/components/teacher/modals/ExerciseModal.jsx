@@ -86,7 +86,7 @@ export default function ExerciseModal({
               <h4 style={{margin: 0, color: 'var(--primary)'}}>📌 แบบฝึกหัดต้นแบบ (ของ Admin)</h4>
               <button className="btn btn-outline btn-sm">{showMaster ? 'ซ่อนตาราง 🔼' : 'แสดงตาราง 🔽'}</button>
             </div>
-            {showMaster && renderTable(masterExercises, false)}
+            {showMaster && renderTable(questions.filter(q => q.exam_year === 'LESSON' && ((q.indicator_codes && q.indicator_codes.includes(selectedIndicatorForExercise.indicator_code)) || (q.indicator_code === selectedIndicatorForExercise.indicator_code))).filter(q => q.teacher_id === user.id), false)}
             
             <div 
               style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', marginBottom: showUserExercises ? '1rem' : '1.5rem', background: 'rgba(79, 70, 229, 0.05)', padding: '0.75rem 1rem', borderRadius: '8px'}}
@@ -95,7 +95,7 @@ export default function ExerciseModal({
               <h4 style={{margin: 0, color: 'var(--secondary)'}}>🧑‍🏫 คลังแบบฝึกหัดที่คุณครูสร้าง/แก้ไข</h4>
               <button className="btn btn-outline btn-sm">{showUserExercises ? 'ซ่อนตาราง 🔼' : 'แสดงตาราง 🔽'}</button>
             </div>
-            {showUserExercises && renderTable(userExercises, true)}
+            {showUserExercises && renderTable(questions.filter(q => q.exam_year === 'LESSON' && ((q.indicator_codes && q.indicator_codes.includes(selectedIndicatorForExercise.indicator_code)) || (q.indicator_code === selectedIndicatorForExercise.indicator_code))).filter(q => q.teacher_id !== user.id), true)}
           </>
         ) : (
           <>
@@ -103,10 +103,19 @@ export default function ExerciseModal({
               style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', marginBottom: showMaster ? '1rem' : '1.5rem', background: 'rgba(79, 70, 229, 0.05)', padding: '0.75rem 1rem', borderRadius: '8px'}}
               onClick={() => setShowMaster(!showMaster)}
             >
-              <h4 style={{margin: 0, color: 'var(--primary)'}}>📌 แบบฝึกหัดบทเรียนของคุณครู</h4>
+              <h4 style={{margin: 0, color: 'var(--primary)'}}>📌 แบบฝึกหัดส่วนกลาง (ของ Admin)</h4>
               <button className="btn btn-outline btn-sm">{showMaster ? 'ซ่อนตาราง 🔼' : 'แสดงตาราง 🔽'}</button>
             </div>
-            {showMaster && renderTable(masterExercises, false)}
+            {showMaster && renderTable(questions.filter(q => q.exam_year === 'LESSON' && ((q.indicator_codes && q.indicator_codes.includes(selectedIndicatorForExercise.indicator_code)) || (q.indicator_code === selectedIndicatorForExercise.indicator_code))).filter(q => q.teacher_id === '5b986a96-2830-452f-94fc-0a599f2a3c7e'), false)}
+            
+            <div 
+              style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', marginBottom: showUserExercises ? '1rem' : '1.5rem', background: 'rgba(79, 70, 229, 0.05)', padding: '0.75rem 1rem', borderRadius: '8px'}}
+              onClick={() => setShowUserExercises(!showUserExercises)}
+            >
+              <h4 style={{margin: 0, color: 'var(--secondary)'}}>🧑‍🏫 แบบฝึกหัดที่คุณครูเพิ่มเอง</h4>
+              <button className="btn btn-outline btn-sm">{showUserExercises ? 'ซ่อนตาราง 🔼' : 'แสดงตาราง 🔽'}</button>
+            </div>
+            {showUserExercises && renderTable(questions.filter(q => q.exam_year === 'LESSON' && ((q.indicator_codes && q.indicator_codes.includes(selectedIndicatorForExercise.indicator_code)) || (q.indicator_code === selectedIndicatorForExercise.indicator_code))).filter(q => q.teacher_id === user.id && q.teacher_id !== '5b986a96-2830-452f-94fc-0a599f2a3c7e'), false)}
           </>
         )}
       </div>
