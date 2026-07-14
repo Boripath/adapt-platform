@@ -16,6 +16,7 @@ import CurrentYearAnalytics from '../components/teacher/CurrentYearAnalytics';
 import AdminManagement from '../components/admin/AdminManagement';
 import AdminWorkflow from '../components/admin/AdminWorkflow';
 import TeacherManual from '../components/teacher/TeacherManual';
+import Footer from '../components/common/Footer';
 import StudentModal from '../components/teacher/modals/StudentModal';
 import QuestionModal from '../components/teacher/modals/QuestionModal';
 import LessonModal from '../components/teacher/modals/LessonModal';
@@ -629,7 +630,7 @@ export default function TeacherDashboard() {
             คู่มือการใช้งาน
           </button>
           
-          <div style={{marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid var(--border)'}}>
+          <div style={{marginTop: 'auto', paddingTop: '0.5rem', borderTop: '1px solid var(--border)'}}>
             {user.role === 'admin' && (
               <>
                 <button 
@@ -668,6 +669,8 @@ export default function TeacherDashboard() {
         {activeTab === 'manual' && <TeacherManual />}
         {activeTab === 'admin' && user.role === 'admin' && <AdminManagement user={user} setAcademicYear={setAcademicYear} academicYear={academicYear} />}
         {activeTab === 'admin-workflow' && user.role === 'admin' && <AdminWorkflow />}
+        
+        <Footer />
       </main>
 
       <StudentModal isStudentModalOpen={isStudentModalOpen} setIsStudentModalOpen={setIsStudentModalOpen} studentForm={studentForm} setStudentForm={setStudentForm} handleSaveStudent={handleSaveStudent} />
