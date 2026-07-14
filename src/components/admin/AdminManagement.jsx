@@ -187,38 +187,7 @@ export default function AdminManagement({ user, setAcademicYear, academicYear })
   };
 
   const handleCopyLessons = async (targetTeacherId) => {
-    if (!window.confirm('ยืนยันการคัดลอกบทเรียนต้นแบบไปยังครูท่านนี้?')) return;
-    
-    setActionLoading(`lessons-${targetTeacherId}`);
-    
-    // 1. Fetch admin's indicators
-    const { data: adminIndicators, error: fetchError } = await supabase
-      .from('indicators')
-      .select('*')
-      .eq('teacher_id', user.id);
-      
-    if (fetchError || !adminIndicators) {
-      alert('ดึงข้อมูลต้นแบบไม่สำเร็จ');
-      setActionLoading(null);
-      return;
-    }
-    
-    // 2. Prepare payload
-    const payload = adminIndicators.map(ind => {
-      const { id, created_at, ...rest } = ind;
-      return { ...rest, teacher_id: targetTeacherId };
-    });
-    
-    // 3. Upsert or Insert (Need to handle unique indicator_code per teacher)
-    if (payload.length > 0) {
-      // Upsert based on indicator_code + teacher_id
-      const { error: insertError } = await supabase.from('indicators').upsert(payload, { onConflict: 'indicator_code, teacher_id' });
-      if (insertError) alert('คัดลอกไม่สำเร็จ: ' + insertError.message);
-      else alert('คัดลอกเนื้อหาบทเรียนสำเร็จ');
-    } else {
-      alert('ไม่มีเนื้อหาบทเรียนต้นแบบให้คัดลอก');
-    }
-    setActionLoading(null);
+    alert('ระบบได้ถูกปรับให้ครูทุกคนใช้งานตัวชี้วัดและบทเรียนส่วนกลางของ Admin อัตโนมัติแล้ว จึงไม่จำเป็นต้องคัดลอกข้อมูลอีกต่อไป');
   };
 
   const filteredTeachers = teachers.filter(t => 

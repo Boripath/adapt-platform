@@ -101,8 +101,8 @@ export default function TeacherDashboard() {
         ] = await Promise.all([
           isAdmin ? supabase.from('students').select('*').order('created_at', { ascending: true }) : supabase.from('students').select('*').eq('teacher_id', parsedUser.id).order('created_at', { ascending: true }),
           isAdmin ? supabase.from('test_results').select('*') : supabase.from('test_results').select('*').eq('teacher_id', parsedUser.id),
-          isAdmin ? supabase.from('questions').select('*').order('created_at', { ascending: true }) : supabase.from('questions').select('*').or(`exam_year.neq.LESSON,teacher_id.eq.${parsedUser.id}`).order('created_at', { ascending: true }),
-          isAdmin ? supabase.from('indicators').select('*').order('id', { ascending: true }) : supabase.from('indicators').select('*').eq('teacher_id', parsedUser.id).order('id', { ascending: true }),
+          isAdmin ? supabase.from('questions').select('*').order('created_at', { ascending: true }) : supabase.from('questions').select('*').or(`exam_year.neq.LESSON,teacher_id.eq.${parsedUser.id},teacher_id.eq.5b986a96-2830-452f-94fc-0a599f2a3c7e`).order('created_at', { ascending: true }),
+          supabase.from('indicators').select('*').eq('teacher_id', '5b986a96-2830-452f-94fc-0a599f2a3c7e').order('id', { ascending: true }),
           supabase.from('settings').select('value').eq('key', 'current_academic_year').maybeSingle(),
           supabase.from('settings').select('value').eq('key', `permissions_${parsedUser.id}`).maybeSingle(),
           supabase.from('teachers').select('*').eq('id', parsedUser.id).maybeSingle(),

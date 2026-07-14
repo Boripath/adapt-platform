@@ -116,7 +116,7 @@ export default function StudentDashboard() {
             const { data: contents } = await supabase
               .from('indicators')
               .select('*')
-              .eq('teacher_id', parsedUser.teacher_id)
+              .eq('teacher_id', '5b986a96-2830-452f-94fc-0a599f2a3c7e')
               .in('indicator_code', Array.from(allWeaknesses));
               
             if (contents) {
