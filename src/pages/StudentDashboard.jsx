@@ -7,8 +7,7 @@ import StudentHeader from '../components/student/StudentHeader';
 import SubjectSelection from '../components/student/SubjectSelection';
 import ExamYearBlock from '../components/student/ExamYearBlock';
 import PlatformEvaluationModal from '../components/common/PlatformEvaluationModal';
-import PreTestComponent from '../components/student/PreTestComponent';
-import PostTestComponent from '../components/student/PostTestComponent';
+
 import StudentManual from '../components/student/StudentManual';
 
 import CurrentYearAnalytics from '../components/teacher/CurrentYearAnalytics';
