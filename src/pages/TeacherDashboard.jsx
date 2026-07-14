@@ -666,7 +666,7 @@ export default function TeacherDashboard() {
         {activeTab === 'question-analytics' && <QuestionBankAnalytics user={user} openIndicatorInfo={openIndicatorInfo} />}
         {activeTab === 'historical-analytics' && <HistoricalAnalytics questions={questions} getQuestionPreview={getQuestionPreview} openIndicatorInfo={openIndicatorInfo} user={user} />}
         {activeTab === 'current-year-analytics' && <CurrentYearAnalytics testResults={testResults} questions={questions} openIndicatorInfo={openIndicatorInfo} user={user} students={students} teachersList={teachersList} />}
-        {activeTab === 'manual' && <TeacherManual />}
+        {activeTab === 'manual' && <TeacherManual setActiveTab={setActiveTab} />}
         {activeTab === 'admin' && user.role === 'admin' && <AdminManagement user={user} setAcademicYear={setAcademicYear} academicYear={academicYear} />}
         {activeTab === 'admin-workflow' && user.role === 'admin' && <AdminWorkflow />}
         
