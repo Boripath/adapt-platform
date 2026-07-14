@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Login from './pages/Login';
 import StudentDashboard from './pages/StudentDashboard';
 import TeacherDashboard from './pages/TeacherDashboard';
@@ -7,12 +7,15 @@ import LessonRoom from './pages/LessonRoom';
 import Header from './components/common/Header';
 import Footer from './components/common/Footer';
 
-function App() {
+function AppContent() {
+  const location = useLocation();
+  const isDashboard = location.pathname.includes('dashboard') || location.pathname.includes('exam') || location.pathname.includes('lesson');
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
       <Header />
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: isDashboard ? 'hidden' : 'auto' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: isDashboard ? 'hidden' : 'visible' }}>
           <Routes>
             <Route path="/" element={<Login />} />
             <Route path="/student-dashboard" element={<StudentDashboard />} />
@@ -22,10 +25,14 @@ function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
-        <Footer />
+        {!isDashboard && <Footer />}
       </main>
     </div>
   );
+}
+
+function App() {
+  return <AppContent />;
 }
 
 export default App;
