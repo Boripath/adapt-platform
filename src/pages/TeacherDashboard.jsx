@@ -620,15 +620,33 @@ export default function TeacherDashboard() {
           >
             ผลการประเมินความพึงพอใจ
           </button>
+          
+          <button 
+            className={`btn ${activeTab === 'manual' ? 'btn-primary' : 'btn-outline'} mt-2`}
+            onClick={() => setActiveTab('manual')}
+            style={{borderColor: '#10b981', color: activeTab === 'manual' ? 'white' : '#10b981', backgroundColor: activeTab === 'manual' ? '#10b981' : 'transparent'}}
+          >
+            คู่มือการใช้งาน
+          </button>
+          
           <div style={{marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid var(--border)'}}>
             {user.role === 'admin' && (
-              <button 
-                className={`btn ${activeTab === 'admin' ? 'btn-primary' : 'btn-outline'} mb-2`}
-                onClick={() => setActiveTab('admin')}
-                style={{width: '100%', justifyContent: 'center'}}
-              >
-                จัดการบัญชีครูผู้ใช้งาน
-              </button>
+              <>
+                <button 
+                  className={`btn ${activeTab === 'admin' ? 'btn-primary' : 'btn-outline'} mb-2`}
+                  onClick={() => setActiveTab('admin')}
+                  style={{width: '100%', justifyContent: 'center'}}
+                >
+                  จัดการบัญชีครูผู้ใช้งาน
+                </button>
+                <button 
+                  className={`btn ${activeTab === 'admin-workflow' ? 'btn-primary' : 'btn-outline'} mb-2`}
+                  onClick={() => setActiveTab('admin-workflow')}
+                  style={{width: '100%', justifyContent: 'center'}}
+                >
+                  กระบวนการทำงาน ADAPT
+                </button>
+              </>
             )}
             <button onClick={handleLogout} className="btn btn-outline text-red" style={{width: '100%', justifyContent: 'center'}}>
               <LogOut size={18} style={{marginRight: '8px'}} /> ออกจากระบบ
