@@ -1,74 +1,108 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, User, Lock, ArrowRight, GraduationCap, Target, BarChart2, ShieldCheck, CheckCircle, PlayCircle, MessageSquare, Star } from 'lucide-react';
+import { BookOpen, User, Lock, ArrowRight, GraduationCap, Target, BarChart2, ShieldCheck, CheckCircle, PlayCircle, MessageSquare, Star, Download } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import html2canvas from 'html2canvas';
 import './Login.css';
 
-const AdaptAdvertisement = () => (
-  <div className="glass-panel" style={{ flex: '2 1 600px', maxWidth: '800px', padding: '2.5rem', animation: 'fadeIn 0.5s ease-out' }}>
-    <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-      <span style={{ backgroundColor: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)', padding: '0.5rem 1rem', borderRadius: '20px', fontWeight: 'bold', fontSize: '0.9rem' }}>สำหรับคุณครูและผู้บริหาร</span>
-      <h2 style={{ color: 'var(--text-main)', marginTop: '1rem', fontSize: '1.8rem' }}>🌟 ทำไมโรงเรียนถึงควรใช้ระบบ ADAPT?</h2>
-      <p style={{ color: 'var(--text-light)', fontSize: '1rem' }}>เปลี่ยนข้อมูลตัวเลขให้กลายเป็นแผนที่นำทางในการจัดการศึกษา</p>
+const AdaptAdvertisement = () => {
+  const adRef = useRef(null);
+
+  const handleExport = async () => {
+    if (adRef.current) {
+      try {
+        const canvas = await html2canvas(adRef.current, { 
+          scale: 2,
+          backgroundColor: '#ffffff', // Set background color
+        });
+        const dataUrl = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = 'ADAPT_Platform_Features.png';
+        link.href = dataUrl;
+        link.click();
+      } catch (err) {
+        console.error("Failed to export image", err);
+      }
+    }
+  };
+
+  return (
+    <div style={{ position: 'relative', flex: '2 1 600px', maxWidth: '800px', animation: 'fadeIn 0.5s ease-out' }}>
+      <button 
+        onClick={handleExport}
+        className="btn btn-outline"
+        style={{ position: 'absolute', top: '1rem', right: '1rem', zIndex: 10, display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'white' }}
+        title="บันทึกเป็นรูปภาพ"
+      >
+        <Download size={18} /> ดาวน์โหลด (PNG)
+      </button>
+
+      <div ref={adRef} className="glass-panel" style={{ padding: '3.5rem 2.5rem 2.5rem 2.5rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <span style={{ backgroundColor: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)', padding: '0.5rem 1rem', borderRadius: '20px', fontWeight: 'bold', fontSize: '0.9rem' }}>สำหรับคุณครูและผู้บริหาร</span>
+          <h2 style={{ color: 'var(--text-main)', marginTop: '1rem', fontSize: '1.8rem' }}>🌟 ทำไมโรงเรียนถึงควรใช้ระบบ ADAPT?</h2>
+          <p style={{ color: 'var(--text-light)', fontSize: '1rem' }}>เปลี่ยนข้อมูลตัวเลขให้กลายเป็นแผนที่นำทางในการจัดการศึกษา</p>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          
+          {/* Feature 1 */}
+          <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '12px', borderLeft: '4px solid var(--primary)', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', margin: '0 0 0.8rem 0', fontSize: '1.2rem' }}>
+              <Target size={24} /> 1. วิเคราะห์คลังข้อสอบ O-NET และตัวชี้วัด (ป.1 - ป.6)
+            </h3>
+            <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.95rem', color: 'var(--text-light)' }}>
+              ระบบชำแหละคลังข้อสอบระดับชาติทั้งหมด ชี้เป้า <b>"ตัวชี้วัดที่ตกหล่น (ไม่เคยออกสอบ)"</b> และ <b>"ตัวชี้วัดยอดฮิต"</b> แยกตามสาระและมาตรฐานอย่างละเอียด
+            </p>
+            <div style={{ backgroundColor: '#f8fafc', padding: '0.8rem', borderRadius: '8px', fontSize: '0.9rem', color: 'var(--text-main)' }}>
+              <b>💡 ครูนำไปทำอะไรได้?:</b> วางแผนเก็งข้อสอบ จัดลำดับความสำคัญในการสอน และสร้างเครื่องมือวัดผลเสริมสำหรับตัวชี้วัดที่หายไปได้อย่างแม่นยำ
+            </div>
+          </div>
+
+          {/* Feature 2 */}
+          <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '12px', borderLeft: '4px solid var(--secondary)', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--secondary)', margin: '0 0 0.8rem 0', fontSize: '1.2rem' }}>
+              <BarChart2 size={24} /> 2. วิเคราะห์ผลสอบ "ย้อนหลัง" (Historical Data)
+            </h3>
+            <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.95rem', color: 'var(--text-light)' }}>
+              ครูกรอกสถิติร้อยละที่ตอบถูกของปีที่ผ่านมา ระบบจะวิเคราะห์หา <b>ความแข็ง-อ่อนของตัวชี้วัด</b> ทั้งภาพรวมสะสมทุกปี และแนวโน้มแบบรายปี
+            </p>
+            <div style={{ backgroundColor: '#f8fafc', padding: '0.8rem', borderRadius: '8px', fontSize: '0.9rem', color: 'var(--text-main)' }}>
+              <b>💡 ครูนำไปทำอะไรได้?:</b> ค้นหา "ปัญหาเรื้อรัง" ที่นักเรียนหลายรุ่นทำไม่ได้เหมือนๆ กัน เพื่อปรับกลยุทธ์การสอนตั้งแต่ต้นเทอม ตัดไฟแต่ต้นลม
+            </div>
+          </div>
+
+          {/* Feature 3 */}
+          <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '12px', borderLeft: '4px solid #f59e0b', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#f59e0b', margin: '0 0 0.8rem 0', fontSize: '1.2rem' }}>
+              <ShieldCheck size={24} /> 3. วิเคราะห์วินิจฉัย "ปีปัจจุบัน" (Current Year Diagnostics)
+            </h3>
+            <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.95rem', color: 'var(--text-light)' }}>
+              ใช้คลังข้อสอบทดสอบนักเรียนรุ่นปัจจุบัน เพื่อสแกนจุดแข็ง-จุดอ่อน พร้อมจัดอันดับคะแนน และ <b>เปรียบเทียบพัฒนาการชัดเจน (Pre-test vs Post-test)</b>
+            </p>
+            <div style={{ backgroundColor: '#f8fafc', padding: '0.8rem', borderRadius: '8px', fontSize: '0.9rem', color: 'var(--text-main)' }}>
+              <b>💡 ครูนำไปทำอะไรได้?:</b> นำไปจัดกลุ่มนักเรียนที่อ่อนในเรื่องเดียวกัน เพื่อทำ "ซ่อมเสริมแบบพุ่งเป้า (Targeted Remedial)" ไม่ต้องสอนเหมาเข่งใหม่ทั้งหมด
+            </div>
+          </div>
+
+          {/* Extras */}
+          <div style={{ padding: '1rem', backgroundColor: 'rgba(79, 70, 229, 0.05)', borderRadius: '12px', border: '1px dashed var(--primary)' }}>
+            <h4 style={{ margin: '0 0 0.8rem 0', color: 'var(--primary)', fontSize: '1.1rem' }}>✨ ครบจบในระบบเดียวด้วยฟีเจอร์เสริม</h4>
+            <ul style={{ margin: 0, paddingLeft: '1.5rem', color: 'var(--text-main)', fontSize: '0.95rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <li><PlayCircle size={16} style={{display: 'inline', verticalAlign: 'text-bottom', color: 'var(--secondary)'}}/> <b>ระบบจัดการบทเรียนรายตัวชี้วัด:</b> ครูอัปโหลด VDO และแบบฝึกหัด ให้นักเรียนเรียนซ่อมเสริมตามจุดอ่อนของตนเองได้ทันที</li>
+              <li><MessageSquare size={16} style={{display: 'inline', verticalAlign: 'text-bottom', color: 'var(--secondary)'}}/> <b>กระดานถาม-ตอบอัจฉริยะ:</b> แยกหมวดหมู่ตามบทเรียน ไม่ปะปนกัน ถามตอบได้ตรงจุด</li>
+              <li><Star size={16} style={{display: 'inline', verticalAlign: 'text-bottom', color: 'var(--secondary)'}}/> <b>แบบประเมินความพึงพอใจ:</b> รับ Feedback จากนักเรียนเพื่อนำมาปรับปรุงสื่อการสอน</li>
+            </ul>
+            <div style={{ marginTop: '1rem', fontSize: '0.85rem', color: 'var(--text-light)', fontStyle: 'italic' }}>
+              * ข้อมูลมีความปลอดภัยและเป็นส่วนตัว: ครูจะเห็นเฉพาะข้อมูลโรงเรียนตนเอง ในขณะที่ผู้บริหาร (Admin) สามารถดูภาพรวมระดับเขตพื้นที่ได้
+            </div>
+          </div>
+
+        </div>
+      </div>
     </div>
-
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      
-      {/* Feature 1 */}
-      <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '12px', borderLeft: '4px solid var(--primary)', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
-        <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', margin: '0 0 0.8rem 0', fontSize: '1.2rem' }}>
-          <Target size={24} /> 1. วิเคราะห์คลังข้อสอบ O-NET และตัวชี้วัด (ป.1 - ป.6)
-        </h3>
-        <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.95rem', color: 'var(--text-light)' }}>
-          ระบบชำแหละคลังข้อสอบระดับชาติทั้งหมด ชี้เป้า <b>"ตัวชี้วัดที่ตกหล่น (ไม่เคยออกสอบ)"</b> และ <b>"ตัวชี้วัดยอดฮิต"</b> แยกตามสาระและมาตรฐานอย่างละเอียด
-        </p>
-        <div style={{ backgroundColor: '#f8fafc', padding: '0.8rem', borderRadius: '8px', fontSize: '0.9rem', color: 'var(--text-main)' }}>
-          <b>💡 ครูนำไปทำอะไรได้?:</b> วางแผนเก็งข้อสอบ จัดลำดับความสำคัญในการสอน และสร้างเครื่องมือวัดผลเสริมสำหรับตัวชี้วัดที่หายไปได้อย่างแม่นยำ
-        </div>
-      </div>
-
-      {/* Feature 2 */}
-      <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '12px', borderLeft: '4px solid var(--secondary)', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
-        <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--secondary)', margin: '0 0 0.8rem 0', fontSize: '1.2rem' }}>
-          <BarChart2 size={24} /> 2. วิเคราะห์ผลสอบ "ย้อนหลัง" (Historical Data)
-        </h3>
-        <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.95rem', color: 'var(--text-light)' }}>
-          ครูกรอกสถิติร้อยละที่ตอบถูกของปีที่ผ่านมา ระบบจะวิเคราะห์หา <b>ความแข็ง-อ่อนของตัวชี้วัด</b> ทั้งภาพรวมสะสมทุกปี และแนวโน้มแบบรายปี
-        </p>
-        <div style={{ backgroundColor: '#f8fafc', padding: '0.8rem', borderRadius: '8px', fontSize: '0.9rem', color: 'var(--text-main)' }}>
-          <b>💡 ครูนำไปทำอะไรได้?:</b> ค้นหา "ปัญหาเรื้อรัง" ที่นักเรียนหลายรุ่นทำไม่ได้เหมือนๆ กัน เพื่อปรับกลยุทธ์การสอนตั้งแต่ต้นเทอม ตัดไฟแต่ต้นลม
-        </div>
-      </div>
-
-      {/* Feature 3 */}
-      <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '12px', borderLeft: '4px solid #f59e0b', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
-        <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#f59e0b', margin: '0 0 0.8rem 0', fontSize: '1.2rem' }}>
-          <ShieldCheck size={24} /> 3. วิเคราะห์วินิจฉัย "ปีปัจจุบัน" (Current Year Diagnostics)
-        </h3>
-        <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.95rem', color: 'var(--text-light)' }}>
-          ใช้คลังข้อสอบทดสอบนักเรียนรุ่นปัจจุบัน เพื่อสแกนจุดแข็ง-จุดอ่อน พร้อมจัดอันดับคะแนน และ <b>เปรียบเทียบพัฒนาการชัดเจน (Pre-test vs Post-test)</b>
-        </p>
-        <div style={{ backgroundColor: '#f8fafc', padding: '0.8rem', borderRadius: '8px', fontSize: '0.9rem', color: 'var(--text-main)' }}>
-          <b>💡 ครูนำไปทำอะไรได้?:</b> นำไปจัดกลุ่มนักเรียนที่อ่อนในเรื่องเดียวกัน เพื่อทำ "ซ่อมเสริมแบบพุ่งเป้า (Targeted Remedial)" ไม่ต้องสอนเหมาเข่งใหม่ทั้งหมด
-        </div>
-      </div>
-
-      {/* Extras */}
-      <div style={{ padding: '1rem', backgroundColor: 'rgba(79, 70, 229, 0.05)', borderRadius: '12px', border: '1px dashed var(--primary)' }}>
-        <h4 style={{ margin: '0 0 0.8rem 0', color: 'var(--primary)', fontSize: '1.1rem' }}>✨ ครบจบในระบบเดียวด้วยฟีเจอร์เสริม</h4>
-        <ul style={{ margin: 0, paddingLeft: '1.5rem', color: 'var(--text-main)', fontSize: '0.95rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <li><PlayCircle size={16} style={{display: 'inline', verticalAlign: 'text-bottom', color: 'var(--secondary)'}}/> <b>ระบบจัดการบทเรียนรายตัวชี้วัด:</b> ครูอัปโหลด VDO และแบบฝึกหัด ให้นักเรียนเรียนซ่อมเสริมตามจุดอ่อนของตนเองได้ทันที</li>
-          <li><MessageSquare size={16} style={{display: 'inline', verticalAlign: 'text-bottom', color: 'var(--secondary)'}}/> <b>กระดานถาม-ตอบอัจฉริยะ:</b> แยกหมวดหมู่ตามบทเรียน ไม่ปะปนกัน ถามตอบได้ตรงจุด</li>
-          <li><Star size={16} style={{display: 'inline', verticalAlign: 'text-bottom', color: 'var(--secondary)'}}/> <b>แบบประเมินความพึงพอใจ:</b> รับ Feedback จากนักเรียนเพื่อนำมาปรับปรุงสื่อการสอน</li>
-        </ul>
-        <div style={{ marginTop: '1rem', fontSize: '0.85rem', color: 'var(--text-light)', fontStyle: 'italic' }}>
-          * ข้อมูลมีความปลอดภัยและเป็นส่วนตัว: ครูจะเห็นเฉพาะข้อมูลโรงเรียนตนเอง ในขณะที่ผู้บริหาร (Admin) สามารถดูภาพรวมระดับเขตพื้นที่ได้
-        </div>
-      </div>
-
-    </div>
-  </div>
-);
+  );
+};
 
 export default function Login() {
   const navigate = useNavigate();
