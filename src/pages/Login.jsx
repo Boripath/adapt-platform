@@ -1,43 +1,15 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, User, Lock, ArrowRight, GraduationCap, Target, BarChart2, ShieldCheck, CheckCircle, PlayCircle, MessageSquare, Star, Download } from 'lucide-react';
+import { BookOpen, User, Lock, ArrowRight, GraduationCap, Target, BarChart2, ShieldCheck, CheckCircle, PlayCircle, MessageSquare, Star } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import html2canvas from 'html2canvas';
 import './Login.css';
 
 const AdaptAdvertisement = () => {
-  const adRef = useRef(null);
-
-  const handleExport = async () => {
-    if (adRef.current) {
-      try {
-        const canvas = await html2canvas(adRef.current, { 
-          scale: 2,
-          backgroundColor: '#ffffff', // Set background color
-        });
-        const dataUrl = canvas.toDataURL('image/png');
-        const link = document.createElement('a');
-        link.download = 'ADAPT_Platform_Features.png';
-        link.href = dataUrl;
-        link.click();
-      } catch (err) {
-        console.error("Failed to export image", err);
-      }
-    }
-  };
-
   return (
     <div style={{ position: 'relative', flex: '2 1 600px', maxWidth: '800px', animation: 'fadeIn 0.5s ease-out' }}>
-      <button 
-        onClick={handleExport}
-        className="btn btn-outline"
-        style={{ position: 'absolute', top: '1rem', right: '1rem', zIndex: 10, display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'white' }}
-        title="บันทึกเป็นรูปภาพ"
-      >
-        <Download size={18} /> ดาวน์โหลด (PNG)
-      </button>
 
-      <div ref={adRef} className="glass-panel" style={{ padding: '3.5rem 2.5rem 2.5rem 2.5rem' }}>
+
+      <div className="glass-panel" style={{ padding: '3.5rem 2.5rem 2.5rem 2.5rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <span style={{ backgroundColor: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary)', padding: '0.5rem 1rem', borderRadius: '20px', fontWeight: 'bold', fontSize: '0.9rem' }}>สำหรับคุณครูและผู้บริหาร</span>
           <h2 style={{ color: 'var(--text-main)', marginTop: '1rem', fontSize: '1.8rem' }}>🌟 ทำไมโรงเรียนถึงควรใช้ระบบ ADAPT?</h2>
