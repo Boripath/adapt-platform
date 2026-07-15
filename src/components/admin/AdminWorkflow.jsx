@@ -1,7 +1,28 @@
-import React from 'react';
-import { Target, BarChart2, UserCheck, ShieldCheck, Users, ArrowRight, ArrowDown, RefreshCw } from 'lucide-react';
+import React, { useRef } from 'react';
+import { Target, BarChart2, UserCheck, ShieldCheck, Users, ArrowRight, ArrowDown, RefreshCw, Download } from 'lucide-react';
+import html2canvas from 'html2canvas';
 
 export default function AdminWorkflow() {
+  const workflowRef = useRef(null);
+
+  const handleExport = async () => {
+    if (workflowRef.current) {
+      try {
+        const canvas = await html2canvas(workflowRef.current, { 
+          scale: 2,
+          backgroundColor: '#f8fafc', // match background color
+        });
+        const dataUrl = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = 'ADAPT_Workflow_Model.png';
+        link.href = dataUrl;
+        link.click();
+      } catch (err) {
+        console.error("Failed to export image", err);
+      }
+    }
+  };
+
   const steps = [
     {
       id: 1,
@@ -51,17 +72,27 @@ export default function AdminWorkflow() {
   ];
 
   return (
-    <div className="glass-panel" style={{ padding: '2rem', animation: 'fadeIn 0.5s ease-out' }}>
-      <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-        <h2 style={{ color: 'var(--primary)', marginBottom: '0.5rem', fontSize: '1.8rem' }}>⚙️ กระบวนการทำงานแบบ ADAPT (ADAPT Workflow)</h2>
-        <h3 style={{ color: 'var(--secondary)', marginBottom: '1.5rem', fontWeight: 'normal' }}>
-          Analytic and Diagnostic Assessment for Personalized Teaching
-        </h3>
-        <p style={{ color: 'var(--text-light)', maxWidth: '700px', margin: '0 auto', lineHeight: '1.6' }}>
-          แพลตฟอร์มนี้บูรณาการแนวคิดทฤษฎีการจัดการเรียนรู้รายบุคคลเข้ากับ <b>"โปงลางโมเดล"</b> 
-          ของ สพป.กาฬสินธุ์ เขต 1 เพื่อสร้างกระบวนการเรียนรู้ที่ยั่งยืน และยกระดับผลสัมฤทธิ์อย่างเป็นระบบ
-        </p>
-      </div>
+    <div style={{ position: 'relative' }}>
+      <button 
+        onClick={handleExport}
+        className="btn btn-outline"
+        style={{ position: 'absolute', top: '1rem', right: '1rem', zIndex: 10, display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'white' }}
+        title="บันทึกเป็นรูปภาพ"
+      >
+        <Download size={18} /> ดาวน์โหลดแผนภาพ (PNG)
+      </button>
+
+      <div ref={workflowRef} className="glass-panel" style={{ padding: '3rem 2rem', animation: 'fadeIn 0.5s ease-out', backgroundColor: '#f8fafc' }}>
+        <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+          <h2 style={{ color: 'var(--primary)', marginBottom: '0.5rem', fontSize: '1.8rem' }}>⚙️ กระบวนการทำงานแบบ ADAPT (ADAPT Workflow)</h2>
+          <h3 style={{ color: 'var(--secondary)', marginBottom: '1.5rem', fontWeight: 'normal' }}>
+            Analytic and Diagnostic Assessment for Personalized Teaching
+          </h3>
+          <p style={{ color: 'var(--text-light)', maxWidth: '700px', margin: '0 auto', lineHeight: '1.6' }}>
+            แพลตฟอร์มนี้บูรณาการแนวคิดทฤษฎีการจัดการเรียนรู้รายบุคคลเข้ากับ <b>"โปงลางโมเดล"</b> 
+            ของ สพป.กาฬสินธุ์ เขต 1 เพื่อสร้างกระบวนการเรียนรู้ที่ยั่งยืน และยกระดับผลสัมฤทธิ์อย่างเป็นระบบ
+          </p>
+        </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', maxWidth: '1000px', margin: '0 auto', gap: '1rem' }}>
         {steps.map((step, index) => (
@@ -142,6 +173,7 @@ export default function AdminWorkflow() {
            <RefreshCw size={24} /> วนกลับไปพัฒนาอย่างต่อเนื่อง
         </div>
       </div>
+    </div>
     </div>
   );
 }
